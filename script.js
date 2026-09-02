@@ -619,35 +619,160 @@ async function checkAdminSession() {
 // PASSWORD RESET SESSION
 // ========================================
 
-async function checkPasswordReset() {
+async function addLevel() {
 
-    if (!supabaseClient) return;
+    const message =
+        document.getElementById("addLevelMessage");
 
-    const hash =
-        window.location.hash;
+    const levelName =
+        document.getElementById("levelName").value.trim();
+
+    const levelId =
+        document.getElementById("levelId").value.trim();
+
+    const creatorName =
+        document.getElementById("creatorName").value.trim();
+
+    const difficulty =
+        document.getElementById("difficulty").value.trim();
+
+    const position =
+        document.getElementById("position").value.trim();
+
+    const youtubeUrl =
+        document.getElementById("youtubeUrl").value.trim();
+
+
+    if (!supabaseClient) {
+
+        message.textContent =
+            "Supabase is not connected.";
+
+        return;
+    }
+
 
     if (
-        hash.includes("type=recovery") ||
-        hash.includes("access_token=")
+        !levelName ||
+        !levelId ||
+        !creatorName ||
+        !difficulty ||
+        !position
     ) {
 
-        showPage("resetPassword");
+        message.textContent =
+            "Please fill in all required fields.";
+
+        return;
+    }
+
+
+    if (isNaN(Number(position)) || Number(position) < 1) {
+
+        message.textContent =
+            "Position must be a number greater than 0.";
+
+        return;
+    }
+
+
+    message.textContent =
+        "Adding level...";
+
+
+    try {
+
+        const { data: sessionData } =
+            await supabaseClient.auth.getSession();
+
+        if (!sessionData.session) {
+
+            message.textContent =
+                "You are not logged in.";
+
+            return;
+        }
+
+
+        const { data: isAdmin, error: adminError } =
+            await supabaseClient.rpc("is_admin");
+
+
+        if (adminError) {
+
+            console.error(adminError);
+
+            message.textContent =
+                "Could not verify administrator.";
+
+            return;
+        }
+
+
+        if (!isAdmin) {
+
+            message.textContent =
+                "You do not have administrator access.";
+
+            return;
+        }
+
+
+        const { error } =
+            await supabaseClient
+                .from("levels")
+                .insert({
+
+                    level_name: levelName,
+
+                    level_id: levelId,
+
+                    creator_name: creatorName,
+
+                    difficulty: difficulty,
+
+                    position: Number(position),
+
+                    youtube_url:
+                        youtubeUrl || null
+
+                });
+
+
+        if (error) {
+
+            console.error(error);
+
+            message.textContent =
+                "Could not add the level.";
+
+            return;
+        }
+
+
+        message.textContent =
+            "Level added successfully!";
+
+
+        document.getElementById("levelName").value = "";
+        document.getElementById("levelId").value = "";
+        document.getElementById("creatorName").value = "";
+        document.getElementById("difficulty").value = "";
+        document.getElementById("position").value = "";
+        document.getElementById("youtubeUrl").value = "";
+
+
+        await loadLevels();
+
+        await loadAdminLevels();
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Something went wrong.";
+
     }
 }
-
-
-// ========================================
-// START
-// ========================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function() {
-
-        showPage("list");
-
-        checkAdminSession();
-
-        checkPasswordReset();
-    }
-);
