@@ -1,20 +1,32 @@
-// ================= SUPABASE =================
+// ========================================
+// SUPABASE
+// ========================================
 
 const SUPABASE_URL = "https://irxkvnromngihugetrwf.supabase.co";
 const SUPABASE_KEY = "sb_publishable_R7MlVHvKXHn9n49mRPpo3g_-J2lwfWR";
 
-const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+let supabaseClient = null;
+
+try {
+    if (
+        window.supabase &&
+        SUPABASE_URL.startsWith("https://") &&
+        !SUPABASE_URL.includes("ТВОЙ_PROJECT_URL") &&
+        !SUPABASE_KEY.includes("ТВОЙ_PUBLISHABLE_KEY")
+    ) {
+        supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+    }
+} catch (error) {
+    console.error("Supabase error:", error);
+}
 
 
-// ================= LEVELS =================
-
-let levels = [];
-
-
-// ================= PAGE NAVIGATION =================
+// ========================================
+// PAGE NAVIGATION
+// ========================================
 
 function showPage(page) {
 
@@ -25,7 +37,7 @@ function showPage(page) {
         "adminPage"
     ];
 
-    pages.forEach(id => {
+    pages.forEach(function(id) {
         const element = document.getElementById(id);
 
         if (element) {
@@ -33,53 +45,91 @@ function showPage(page) {
         }
     });
 
+    const selectedPage =
+        document.getElementById(page + "Page");
+
+    if (selectedPage) {
+        selectedPage.classList.remove("hidden");
+    }
 
     if (page === "list") {
-        document.getElementById("listPage").classList.remove("hidden");
         loadLevels();
-    }
-
-    if (page === "submit") {
-        document.getElementById("submitPage").classList.remove("hidden");
-    }
-
-    if (page === "adminLogin") {
-        document.getElementById("adminLoginPage").classList.remove("hidden");
-    }
-
-    if (page === "admin") {
-        document.getElementById("adminPage").classList.remove("hidden");
     }
 }
 
 
-// ================= LOAD LEVELS =================
+// ========================================
+// LOAD LEVELS
+// ========================================
 
 async function loadLevels() {
 
-    const container = document.getElementById("levels-container");
+    const container =
+        document.getElementById("levels-container");
 
     if (!container) return;
 
-    container.innerHTML = `
-        <div class="loading">
-            Loading levels...
-        </div>
-    `;
+    if (!supabaseClient) {
+        container.innerHTML = `
+            <div class="empty">
+                Supabase is not connected.
+            </div>
+        `;
+        return;
+    }
 
+    try {
 
-    const { data, error } = await supabase
-        .from("levels")
-        .select("*")
-        .order("position", { ascending: true });
+        const { data, error } =
+            await supabaseClient
+                .from("levels")
+                .select("*")
+                .order("position", {
+                    ascending: true
+                });
 
+        if (error) {
+            console.error(error);
 
-    if (error) {
+            container.innerHTML = `
+                <div class="empty">
+                    No levels available yet.
+                </div>
+            `;
+
+            return;
+        }
+
+        renderLevels(data || []);
+
+    } catch (error) {
 
         console.error(error);
 
         container.innerHTML = `
-            <div class="loading">
+            <div class="empty">
+                Unable to load levels.
+            </div>
+        `;
+    }
+}
+
+
+// ========================================
+// RENDER LEVELS
+// ========================================
+
+function renderLevels(levels) {
+
+    const container =
+        document.getElementById("levels-container");
+
+    if (!container) return;
+
+    if (levels.length === 0) {
+
+        container.innerHTML = `
+            <div class="empty">
                 No levels available yet.
             </div>
         `;
@@ -87,214 +137,355 @@ async function loadLevels() {
         return;
     }
 
+    container.innerHTML = levels.map(function(level) {
 
-    levels = data || [];
+        let video = "";
 
-    renderLevels(levels);
-}
+        if (level.youtube_url) {
 
+            video = `
+                <a
+                    class="video-button"
+                    href="${escapeHTML(level.youtube_url)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    ▶ YouTube
+                </a>
+            `;
+        }
 
-// ================= DISPLAY LEVELS =================
+        return `
+            <div class="level">
 
-function renderLevels(list) {
+                <div class="rank">
+                    #${escapeHTML(String(level.position))}
+                </div>
 
-    const container = document.getElementById("levels-container");
+                <div class="level-info">
 
-    if (!container) return;
+                    <h3>
+                        ${escapeHTML(level.level_name)}
+                    </h3>
 
+                    <p>
+                        ID: ${escapeHTML(level.level_id)}
+                    </p>
 
-    if (list.length === 0) {
+                    <p>
+                        Creator:
+                        ${escapeHTML(level.creator_name)}
+                    </p>
 
-        container.innerHTML = `
-            <div class="loading">
-                No levels yet.
-            </div>
-        `;
+                    <span class="difficulty">
+                        ${escapeHTML(level.difficulty)}
+                    </span>
 
-        return;
-    }
+                    ${video}
 
-
-    container.innerHTML = "";
-
-
-    list.forEach((level, index) => {
-
-        const card = document.createElement("div");
-
-        card.className = "level";
-
-
-        card.innerHTML = `
-            <div class="rank">
-                #${index + 1}
-            </div>
-
-            <div class="level-info">
-
-                <h3>
-                    ${escapeHTML(level.level_name)}
-                </h3>
-
-                <p>
-                    ID: ${escapeHTML(level.level_id)}
-                </p>
-
-                <p>
-                    Creator:
-                    ${escapeHTML(level.creator_name)}
-                </p>
-
-                <p class="difficulty">
-                    ${escapeHTML(level.difficulty)}
-                </p>
+                </div>
 
             </div>
         `;
 
-
-        container.appendChild(card);
-
-    });
+    }).join("");
 }
 
 
-// ================= SEARCH =================
+// ========================================
+// SEARCH
+// ========================================
 
 function searchLevels() {
 
-    const input = document.getElementById("searchInput");
+    const input =
+        document.getElementById("searchInput");
 
     if (!input) return;
 
+    const search =
+        input.value.toLowerCase().trim();
 
-    const query = input.value
-        .toLowerCase()
-        .trim();
+    const levels =
+        document.querySelectorAll(".level");
 
+    levels.forEach(function(level) {
 
-    const filtered = levels.filter(level => {
+        const text =
+            level.innerText.toLowerCase();
 
-        return (
-            level.level_name.toLowerCase().includes(query) ||
-            level.level_id.toLowerCase().includes(query) ||
-            level.creator_name.toLowerCase().includes(query)
-        );
-
+        level.style.display =
+            text.includes(search)
+                ? "flex"
+                : "none";
     });
-
-
-    renderLevels(filtered);
 }
 
 
-// ================= ADMIN LOGIN =================
+// ========================================
+// ADMIN LOGIN
+// ========================================
 
 async function adminLogin() {
 
-    const adminId =
+    const id =
         document.getElementById("adminId").value.trim();
 
     const password =
         document.getElementById("adminPassword").value;
 
-
     const message =
         document.getElementById("adminLoginMessage");
 
-
-    if (!adminId || !password) {
+    if (!id || !password) {
 
         message.textContent =
-            "Please enter Admin ID and password.";
+            "Please enter your Admin ID and password.";
 
         return;
     }
 
+    if (!supabaseClient) {
+
+        message.textContent =
+            "Supabase is not connected.";
+
+        return;
+    }
 
     message.textContent =
-        "Admin authentication will be connected next.";
+        "Logging in...";
 
-    /*
-        Настоящую авторизацию подключим через Supabase.
+    try {
 
-        Пароль НЕ хранится в этом файле.
-    */
+        // Admin ID currently means your Supabase email
+        const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
+                email: id,
+                password: password
+            });
+
+        if (error) {
+
+            console.error(error);
+
+            message.textContent =
+                "Invalid email or password.";
+
+            return;
+        }
+
+        if (!data.user) {
+
+            message.textContent =
+                "Login failed.";
+
+            return;
+        }
+
+        // Check administrator role
+        const { data: isAdmin, error: adminError } =
+            await supabaseClient.rpc("is_admin");
+
+        if (adminError) {
+
+            console.error(adminError);
+
+            await supabaseClient.auth.signOut();
+
+            message.textContent =
+                "Could not verify administrator.";
+
+            return;
+        }
+
+        if (!isAdmin) {
+
+            await supabaseClient.auth.signOut();
+
+            message.textContent =
+                "You do not have administrator access.";
+
+            return;
+        }
+
+        // Successful admin login
+        message.textContent =
+            "Login successful!";
+
+        showPage("admin");
+
+        loadAdminLevels();
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Something went wrong during login.";
+    }
 }
 
 
-// ================= ADMIN LOGOUT =================
+// ========================================
+// ADMIN LOGOUT
+// ========================================
 
 async function adminLogout() {
 
-    await supabase.auth.signOut();
+    if (supabaseClient) {
+        await supabaseClient.auth.signOut();
+    }
 
     showPage("list");
 }
 
 
-// ================= ADD LEVEL =================
+// ========================================
+// LOAD ADMIN LEVELS
+// ========================================
+
+async function loadAdminLevels() {
+
+    const container =
+        document.getElementById("admin-levels-container");
+
+    if (!container || !supabaseClient) return;
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("levels")
+                .select("*")
+                .order("position", {
+                    ascending: true
+                });
+
+        if (error) {
+
+            console.error(error);
+
+            container.innerHTML = "";
+
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="admin-card">
+                <h3>📋 Current Levels</h3>
+                <p>
+                    ${data.length} level(s) currently
+                    in the Demon List.
+                </p>
+            </div>
+        `;
+
+    } catch (error) {
+
+        console.error(error);
+    }
+}
+
+
+// ========================================
+// ADD LEVEL
+// ========================================
 
 async function addLevel() {
 
     const message =
         document.getElementById("addLevelMessage");
 
+    if (!supabaseClient) {
+
+        message.textContent =
+            "Supabase is not connected.";
+
+        return;
+    }
 
     message.textContent =
-        "Admin authentication is required first.";
+        "Level adding will be connected next.";
 }
 
 
-// ================= SUBMIT LEVEL =================
+// ========================================
+// SUBMIT LEVEL
+// ========================================
 
 async function submitLevel() {
 
     const message =
         document.getElementById("submitMessage");
 
+    if (!supabaseClient) {
+
+        message.textContent =
+            "Supabase is not connected.";
+
+        return;
+    }
 
     message.textContent =
-        "Player account is required to submit a level.";
+        "Player accounts will be connected next.";
 }
 
 
-// ================= ADD LEVEL PANEL =================
-
-function showAddLevel() {
-
-    const panel =
-        document.getElementById("addLevelPanel");
-
-
-    if (!panel) return;
-
-    panel.classList.toggle("hidden");
-}
-
-
-// ================= HTML SECURITY =================
+// ========================================
+// ESCAPE HTML
+// ========================================
 
 function escapeHTML(value) {
 
-    if (value === null || value === undefined) {
-        return "";
-    }
-
-
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 
-// ================= INITIALIZATION =================
+// ========================================
+// CHECK EXISTING SESSION
+// ========================================
 
-document.addEventListener("DOMContentLoaded", () => {
+async function checkAdminSession() {
 
-    showPage("list");
+    if (!supabaseClient) return;
 
-});
+    try {
+
+        const { data } =
+            await supabaseClient.auth.getSession();
+
+        if (!data.session) return;
+
+        const { data: isAdmin } =
+            await supabaseClient.rpc("is_admin");
+
+        if (isAdmin) {
+            console.log("Admin session detected.");
+        }
+
+    } catch (error) {
+
+        console.error(error);
+    }
+}
+
+
+// ========================================
+// START
+// ========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        showPage("list");
+
+        checkAdminSession();
+    }
+);
