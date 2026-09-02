@@ -11,8 +11,8 @@ try {
     if (
         window.supabase &&
         SUPABASE_URL.startsWith("https://") &&
-        !SUPABASE_URL.includes("ТВОЙ_PROJECT_URL") &&
-        !SUPABASE_KEY.includes("ТВОЙ_PUBLISHABLE_KEY")
+        !SUPABASE_URL.includes("ТВОЙ_УЖЕ_РАБОТАЮЩИЙ") &&
+        !SUPABASE_KEY.includes("ТВОЙ_УЖЕ_РАБОТАЮЩИЙ")
     ) {
         supabaseClient = window.supabase.createClient(
             SUPABASE_URL,
@@ -34,7 +34,8 @@ function showPage(page) {
         "listPage",
         "submitPage",
         "adminLoginPage",
-        "adminPage"
+        "adminPage",
+        "resetPasswordPage"
     ];
 
     pages.forEach(function(id) {
@@ -70,11 +71,8 @@ async function loadLevels() {
     if (!container) return;
 
     if (!supabaseClient) {
-        container.innerHTML = `
-            <div class="empty">
-                Supabase is not connected.
-            </div>
-        `;
+        container.innerHTML =
+            `<div class="empty">Supabase is not connected.</div>`;
         return;
     }
 
@@ -84,18 +82,14 @@ async function loadLevels() {
             await supabaseClient
                 .from("levels")
                 .select("*")
-                .order("position", {
-                    ascending: true
-                });
+                .order("position", { ascending: true });
 
         if (error) {
+
             console.error(error);
 
-            container.innerHTML = `
-                <div class="empty">
-                    No levels available yet.
-                </div>
-            `;
+            container.innerHTML =
+                `<div class="empty">No levels available yet.</div>`;
 
             return;
         }
@@ -106,11 +100,8 @@ async function loadLevels() {
 
         console.error(error);
 
-        container.innerHTML = `
-            <div class="empty">
-                Unable to load levels.
-            </div>
-        `;
+        container.innerHTML =
+            `<div class="empty">Unable to load levels.</div>`;
     }
 }
 
@@ -128,67 +119,63 @@ function renderLevels(levels) {
 
     if (levels.length === 0) {
 
-        container.innerHTML = `
-            <div class="empty">
-                No levels available yet.
-            </div>
-        `;
+        container.innerHTML =
+            `<div class="empty">No levels available yet.</div>`;
 
         return;
     }
 
-    container.innerHTML = levels.map(function(level) {
+    container.innerHTML =
+        levels.map(function(level) {
 
-        let video = "";
+            let video = "";
 
-        if (level.youtube_url) {
+            if (level.youtube_url) {
 
-            video = `
-                <a
-                    class="video-button"
-                    href="${escapeHTML(level.youtube_url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    ▶ YouTube
-                </a>
+                video = `
+                    <a class="video-button"
+                       href="${escapeHTML(level.youtube_url)}"
+                       target="_blank"
+                       rel="noopener noreferrer">
+                        ▶ YouTube
+                    </a>
+                `;
+            }
+
+            return `
+                <div class="level">
+
+                    <div class="rank">
+                        #${escapeHTML(String(level.position))}
+                    </div>
+
+                    <div class="level-info">
+
+                        <h3>
+                            ${escapeHTML(level.level_name)}
+                        </h3>
+
+                        <p>
+                            ID: ${escapeHTML(level.level_id)}
+                        </p>
+
+                        <p>
+                            Creator:
+                            ${escapeHTML(level.creator_name)}
+                        </p>
+
+                        <span class="difficulty">
+                            ${escapeHTML(level.difficulty)}
+                        </span>
+
+                        ${video}
+
+                    </div>
+
+                </div>
             `;
-        }
 
-        return `
-            <div class="level">
-
-                <div class="rank">
-                    #${escapeHTML(String(level.position))}
-                </div>
-
-                <div class="level-info">
-
-                    <h3>
-                        ${escapeHTML(level.level_name)}
-                    </h3>
-
-                    <p>
-                        ID: ${escapeHTML(level.level_id)}
-                    </p>
-
-                    <p>
-                        Creator:
-                        ${escapeHTML(level.creator_name)}
-                    </p>
-
-                    <span class="difficulty">
-                        ${escapeHTML(level.difficulty)}
-                    </span>
-
-                    ${video}
-
-                </div>
-
-            </div>
-        `;
-
-    }).join("");
+        }).join("");
 }
 
 
@@ -215,9 +202,8 @@ function searchLevels() {
             level.innerText.toLowerCase();
 
         level.style.display =
-            text.includes(search)
-                ? "flex"
-                : "none";
+            text.includes(search) ? "flex" : "none";
+
     });
 }
 
@@ -253,12 +239,10 @@ async function adminLogin() {
         return;
     }
 
-    message.textContent =
-        "Logging in...";
+    message.textContent = "Logging in...";
 
     try {
 
-        // Admin ID currently means your Supabase email
         const { data, error } =
             await supabaseClient.auth.signInWithPassword({
                 email: id,
@@ -283,7 +267,6 @@ async function adminLogin() {
             return;
         }
 
-        // Check administrator role
         const { data: isAdmin, error: adminError } =
             await supabaseClient.rpc("is_admin");
 
@@ -309,7 +292,6 @@ async function adminLogin() {
             return;
         }
 
-        // Successful admin login
         message.textContent =
             "Login successful!";
 
@@ -323,6 +305,158 @@ async function adminLogin() {
 
         message.textContent =
             "Something went wrong during login.";
+    }
+}
+
+
+// ========================================
+// SEND PASSWORD RESET EMAIL
+// ========================================
+
+async function sendPasswordReset() {
+
+    const id =
+        document.getElementById("adminId").value.trim();
+
+    const message =
+        document.getElementById("adminLoginMessage");
+
+    if (!id) {
+
+        message.textContent =
+            "Enter your admin email first.";
+
+        return;
+    }
+
+    if (!supabaseClient) {
+
+        message.textContent =
+            "Supabase is not connected.";
+
+        return;
+    }
+
+    message.textContent =
+        "Sending password reset email...";
+
+    try {
+
+        const { error } =
+            await supabaseClient.auth.resetPasswordForEmail(
+                id,
+                {
+                    redirectTo:
+                        window.location.origin +
+                        window.location.pathname
+                }
+            );
+
+        if (error) {
+
+            console.error(error);
+
+            message.textContent =
+                "Could not send reset email.";
+
+            return;
+        }
+
+        message.textContent =
+            "Password reset email sent! Check your email.";
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Something went wrong.";
+    }
+}
+
+
+// ========================================
+// UPDATE PASSWORD
+// ========================================
+
+async function updatePassword() {
+
+    const password =
+        document.getElementById("newPassword").value;
+
+    const confirmPassword =
+        document.getElementById("newPasswordConfirm").value;
+
+    const message =
+        document.getElementById("resetPasswordMessage");
+
+    if (!password || !confirmPassword) {
+
+        message.textContent =
+            "Please fill in both password fields.";
+
+        return;
+    }
+
+    if (password !== confirmPassword) {
+
+        message.textContent =
+            "Passwords do not match.";
+
+        return;
+    }
+
+    if (password.length < 6) {
+
+        message.textContent =
+            "Password must be at least 6 characters.";
+
+        return;
+    }
+
+    if (!supabaseClient) {
+
+        message.textContent =
+            "Supabase is not connected.";
+
+        return;
+    }
+
+    message.textContent =
+        "Changing password...";
+
+    try {
+
+        const { error } =
+            await supabaseClient.auth.updateUser({
+                password: password
+            });
+
+        if (error) {
+
+            console.error(error);
+
+            message.textContent =
+                "Could not change password.";
+
+            return;
+        }
+
+        message.textContent =
+            "Password changed successfully!";
+
+        setTimeout(function() {
+
+            showPage("adminLogin");
+
+        }, 1500);
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Something went wrong.";
     }
 }
 
@@ -342,13 +476,15 @@ async function adminLogout() {
 
 
 // ========================================
-// LOAD ADMIN LEVELS
+// ADMIN LEVELS
 // ========================================
 
 async function loadAdminLevels() {
 
     const container =
-        document.getElementById("admin-levels-container");
+        document.getElementById(
+            "admin-levels-container"
+        );
 
     if (!container || !supabaseClient) return;
 
@@ -373,11 +509,14 @@ async function loadAdminLevels() {
 
         container.innerHTML = `
             <div class="admin-card">
+
                 <h3>📋 Current Levels</h3>
+
                 <p>
-                    ${data.length} level(s) currently
-                    in the Demon List.
+                    ${data.length}
+                    level(s) currently in the Demon List.
                 </p>
+
             </div>
         `;
 
@@ -448,7 +587,7 @@ function escapeHTML(value) {
 
 
 // ========================================
-// CHECK EXISTING SESSION
+// CHECK ADMIN SESSION
 // ========================================
 
 async function checkAdminSession() {
@@ -477,6 +616,27 @@ async function checkAdminSession() {
 
 
 // ========================================
+// PASSWORD RESET SESSION
+// ========================================
+
+async function checkPasswordReset() {
+
+    if (!supabaseClient) return;
+
+    const hash =
+        window.location.hash;
+
+    if (
+        hash.includes("type=recovery") ||
+        hash.includes("access_token=")
+    ) {
+
+        showPage("resetPassword");
+    }
+}
+
+
+// ========================================
 // START
 // ========================================
 
@@ -487,5 +647,7 @@ document.addEventListener(
         showPage("list");
 
         checkAdminSession();
+
+        checkPasswordReset();
     }
 );
