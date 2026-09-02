@@ -3,225 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Dash World Demon List</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<header class="header">
-    <div class="header-content">
-        <div>
+    <header>
+        <div class="header-content">
             <h1>Dash World Demon List</h1>
-            <p>The hardest levels in Dash World</p>
+
+            <nav>
+                <button onclick="showPage('list')">
+                    Demon List
+                </button>
+
+                <button onclick="showPage('submit')">
+                    Submit Level
+                </button>
+
+                <button onclick="showPage('adminLogin')">
+                    Admin Login
+                </button>
+            </nav>
         </div>
+    </header>
 
-        <nav>
-            <button onclick="showPage('list')">Demon List</button>
-            <button onclick="showPage('submit')">Submit Level</button>
-            <button class="admin-button" onclick="showPage('adminLogin')">
-                Admin Login
-            </button>
-        </nav>
-    </div>
-</header>
 
-<main>
+    <main>
 
-    <!-- DEMON LIST -->
-    <section id="listPage" class="page">
+        <!-- ==================== -->
+        <!-- DEMON LIST -->
+        <!-- ==================== -->
 
-        <div class="page-title">
-            <h2>🏆 Demon List</h2>
-            <p>Ranked from hardest to easiest</p>
-        </div>
+        <section id="listPage">
 
-        <input
-            id="searchInput"
-            type="text"
-            placeholder="Search levels..."
-            oninput="searchLevels()"
-        >
-
-        <div id="levels-container">
-            <div class="empty">
-                No levels available yet.
+            <div class="page-title">
+                <h2>Demon List</h2>
+                <p>The hardest levels in Dash World.</p>
             </div>
-        </div>
 
-    </section>
+            <div class="search-box">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search levels..."
+                    oninput="searchLevels()"
+                >
+            </div>
 
-
-    <!-- ADMIN LOGIN -->
-    <section id="adminLoginPage" class="page hidden">
-
-        <div class="form-card">
-
-            <h2>🔐 Admin Login</h2>
-            <p>Only the site administrator can access this panel.</p>
-
-            <label>Admin ID</label>
-            <input
-                id="adminId"
-                type="text"
-                placeholder="Admin ID"
-            >
-
-            <label>Password</label>
-            <input
-                id="adminPassword"
-                type="password"
-                placeholder="Password"
-            >
-
-            <button class="primary-button" onclick="adminLogin()">
-                Login
-            </button>
-
-            <p id="adminLoginMessage" class="message"></p>
-
-        </div>
-
-    </section>
-
-
-    <!-- ADMIN PANEL -->
-    <section id="adminPage" class="page hidden">
-
-        <div class="page-title">
-            <h2>⚙️ Admin Panel</h2>
-            <p>Manage the Dash World Demon List</p>
-        </div>
-
-        <div class="admin-card">
-
-            <h3>➕ Add Level</h3>
-
-            <div class="form-grid">
-
-                <div>
-                    <label>Level Name</label>
-                    <input id="levelName" placeholder="Level name">
+            <div id="levels-container">
+                <div class="empty">
+                    Loading levels...
                 </div>
+            </div>
 
-                <div>
-                    <label>Level ID</label>
-                    <input id="levelId" placeholder="Level ID">
-                </div>
+        </section>
 
-                <div>
-                    <label>Creator</label>
-                    <input id="creatorName" placeholder="Creator">
-                </div>
 
-                <div>
-                    <label>Difficulty</label>
-                    <select id="difficulty">
-                        <option>Easy Demon</option>
-                        <option>Medium Demon</option>
-                        <option>Hard Demon</option>
-                        <option>Insane Demon</option>
-                        <option>Extreme Demon</option>
-                    </select>
-                </div>
+        <!-- ==================== -->
+        <!-- SUBMIT LEVEL -->
+        <!-- ==================== -->
 
-                <div>
-                    <label>Position</label>
-                    <input
-                        id="position"
-                        type="number"
-                        min="1"
-                        placeholder="1"
-                    >
-                </div>
+        <section id="submitPage" class="hidden">
 
-                <div>
-                    <label>YouTube Video (optional)</label>
-                    <input
-                        id="youtubeUrl"
-                        placeholder="YouTube URL"
-                    >
-                </div>
+            <div class="page-title">
+                <h2>Submit Level</h2>
+                <p>Submit your level to the Dash World Demon List.</p>
+            </div>
+
+            <div class="form-container">
+
+                <label for="submitLevelName">
+                    Level Name
+                </label>
+
+                <input
+                    type="text"
+                    id="submitLevelName"
+                    placeholder="Level name"
+                >
+
+
+                <label for="submitLevelId">
+                    Level ID
+                </label>
+
+                <input
+                    type="text"
+                    id="submitLevelId"
+                    placeholder="Level ID"
+                >
+
+
+                <label for="submitCreatorName">
+                    Creator
+                </label>
+
+                <input
+                    type="text"
+                    id="submitCreatorName"
+                    placeholder="Creator name"
+                >
+
+
+                <label for="submitUsername">
+                    Your Username
+                </label>
+
+                <input
+                    type="text"
+                    id="submitUsername"
+                    placeholder="Your Dash World username"
+                >
+
+
+                <label for="submitYoutube">
+                    YouTube Video
+                    <span>(optional)</span>
+                </label>
+
+                <input
+                    type="url"
+                    id="submitYoutube"
+                    placeholder="https://youtube.com/..."
+                >
+
+
+                <button
+                    class="primary-button"
+                    onclick="submitLevel()"
+                >
+                    Submit Level
+                </button>
+
+                <p id="submitMessage" class="form-message"></p>
 
             </div>
 
-            <button class="primary-button" onclick="addLevel()">
-                Add Level
-            </button>
+        </section>
 
-            <button class="secondary-button" onclick="adminLogout()">
+
+        <!-- ==================== -->
+        <!-- ADMIN LOGIN -->
+        <!-- ==================== -->
+
+        <section id="adminLoginPage" class="hidden">
+
+            <div class="page-title">
+                <h2>Admin Login</h2>
+                <p>Only the official Dash World Demon List administrator can log in.</p>
+            </div>
+
+            <div class="form-container">
+
+                <label for="adminId">
+                    Admin ID
+                </label>
+
+                <input
+                    type="text"
+                    id="adminId"
+                    placeholder="Admin ID / email"
+                >
+
+
+                <label for="adminPassword">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="adminPassword"
+                    placeholder="Password"
+                >
+
+
+                <button
+                    class="primary-button"
+                    onclick="adminLogin()"
+                >
+                    Login
+                </button>
+
+                <p id="adminLoginMessage" class="form-message"></p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================== -->
+        <!-- ADMIN PANEL -->
+        <!-- ==================== -->
+
+        <section id="adminPage" class="hidden">
+
+            <div class="page-title">
+                <h2>Admin Panel</h2>
+                <p>Manage the Dash World Demon List.</p>
+            </div>
+
+
+            <!-- ADD LEVEL -->
+
+            <div class="form-container">
+
+                <h3>Add Level</h3>
+
+
+                <label for="levelName">
+                    Level Name
+                </label>
+
+                <input
+                    type="text"
+                    id="levelName"
+                    placeholder="Level name"
+                >
+
+
+                <label for="levelId">
+                    Level ID
+                </label>
+
+                <input
+                    type="text"
+                    id="levelId"
+                    placeholder="Level ID"
+                >
+
+
+                <label for="creatorName">
+                    Creator
+                </label>
+
+                <input
+                    type="text"
+                    id="creatorName"
+                    placeholder="Creator name"
+                >
+
+
+                <label for="difficulty">
+                    Difficulty
+                </label>
+
+                <select id="difficulty">
+                    <option value="Extreme Demon">
+                        Extreme Demon
+                    </option>
+
+                    <option value="Insane Demon">
+                        Insane Demon
+                    </option>
+
+                    <option value="Hard Demon">
+                        Hard Demon
+                    </option>
+
+                    <option value="Medium Demon">
+                        Medium Demon
+                    </option>
+
+                    <option value="Easy Demon">
+                        Easy Demon
+                    </option>
+                </select>
+
+
+                <label for="position">
+                    Position
+                </label>
+
+                <input
+                    type="number"
+                    id="position"
+                    min="1"
+                    placeholder="Position"
+                >
+
+
+                <label for="youtubeUrl">
+                    YouTube Video
+                    <span>(optional)</span>
+                </label>
+
+                <input
+                    type="url"
+                    id="youtubeUrl"
+                    placeholder="https://youtube.com/..."
+                >
+
+
+                <button
+                    class="primary-button"
+                    onclick="addLevel()"
+                >
+                    Add Level
+                </button>
+
+                <p id="addLevelMessage" class="form-message"></p>
+
+            </div>
+
+
+            <!-- CURRENT LEVELS -->
+
+            <div id="admin-levels-container">
+
+                <div class="empty">
+                    Loading levels...
+                </div>
+
+            </div>
+
+
+            <button
+                class="secondary-button"
+                onclick="adminLogout()"
+            >
                 Logout
             </button>
 
-            <p id="addLevelMessage" class="message"></p>
+        </section>
 
-        </div>
-
-        <div id="admin-levels-container"></div>
-
-    </section>
+    </main>
 
 
-    <!-- SUBMIT -->
-    <section id="submitPage" class="page hidden">
-
-        <div class="form-card">
-
-            <h2>📤 Submit a Level</h2>
-            <p>Submit a level for review by the administrator.</p>
-
-            <label>Level Name</label>
-            <input
-                id="submitLevelName"
-                placeholder="Level name"
-            >
-
-            <label>Level ID</label>
-            <input
-                id="submitLevelId"
-                placeholder="Level ID"
-            >
-
-            <label>Creator</label>
-            <input
-                id="submitCreatorName"
-                placeholder="Creator"
-            >
-
-            <label>Your Username</label>
-            <input
-                id="submitUsername"
-                placeholder="Your username"
-            >
-
-            <label>YouTube Video (optional)</label>
-            <input
-                id="submitYoutube"
-                placeholder="YouTube URL"
-            >
-
-            <button class="primary-button" onclick="submitLevel()">
-                Submit Level
-            </button>
-
-            <p id="submitMessage" class="message"></p>
-
-        </div>
-
-    </section>
-
-</main>
-
-<footer>
-    <p>Dash World Demon List © 2026</p>
-</footer>
+    <footer>
+        <p>Dash World Demon List © 2026</p>
+    </footer>
 
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ==================== -->
+    <!-- SUPABASE -->
+    <!-- ==================== -->
 
-<!-- Our JavaScript -->
-<script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- YOUR JAVASCRIPT -->
+    <script src="script.js"></script>
 
 </body>
 </html>
