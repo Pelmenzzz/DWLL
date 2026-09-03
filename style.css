@@ -6,7 +6,7 @@ body {
     margin: 0;
     font-family: Arial, sans-serif;
     background: #0b0f18;
-    color: #fff;
+    color: #ffffff;
 }
 
 header {
@@ -25,6 +25,7 @@ header h1 {
 nav {
     display: flex;
     justify-content: center;
+    align-items: center;
     flex-wrap: wrap;
     gap: 10px;
 }
@@ -49,8 +50,8 @@ button.secondary {
 }
 
 button.link-button {
-    background: transparent;
     padding: 0;
+    background: transparent;
     color: #7ea0ff;
     font-size: inherit;
 }
@@ -74,7 +75,7 @@ main {
     border-radius: 16px;
     padding: 22px;
     margin-bottom: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+    box-shadow: 0 10px 30px rgba(0,0,0,.18);
 }
 
 .small-card {
@@ -109,7 +110,8 @@ input:focus {
 }
 
 #levels-container,
-#admin-levels-container {
+#admin-levels-container,
+#submissions-container {
     display: grid;
     gap: 12px;
 }
@@ -133,7 +135,7 @@ input:focus {
 
 .level .rank,
 .level .level-info h3 {
-    color: #fff;
+    color: #ffffff;
 }
 
 .level.rank-1 .rank,
@@ -169,10 +171,6 @@ input:focus {
     color: #7ea0ff;
     text-decoration: none;
     font-weight: 700;
-}
-
-.level-info a:hover {
-    text-decoration: underline;
 }
 
 .admin-level {
@@ -214,6 +212,14 @@ input:focus {
     background: #d94b4b;
 }
 
+.approve-button {
+    background: #27ae60;
+}
+
+.reject-button {
+    background: #d94b4b;
+}
+
 .button-row,
 .admin-title-row {
     display: flex;
@@ -231,6 +237,71 @@ input:focus {
     background: #6c3441;
 }
 
+.logout-button:hover {
+    background: #843f4f;
+}
+
+.submission {
+    padding: 16px;
+    background: #0d1422;
+    border: 1px solid #26344b;
+    border-radius: 13px;
+}
+
+.submission-info {
+    margin-bottom: 13px;
+}
+
+.submission-info strong {
+    display: block;
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+.submission-info span {
+    display: block;
+    color: #9eabc0;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.submission-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status {
+    display: inline-block !important;
+    width: fit-content;
+    padding: 4px 9px;
+    border-radius: 7px;
+    font-weight: 800;
+    font-size: 12px !important;
+    margin-top: 8px !important;
+}
+
+.status.pending {
+    background: #5d4b18;
+    color: #ffe04a;
+}
+
+.status.approved {
+    background: #164a2b;
+    color: #54df86;
+}
+
+.status.rejected {
+    background: #54212a;
+    color: #ff7b88;
+}
+
+.current-user {
+    color: #aeb9cc;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 hr {
     border: 0;
     border-top: 1px solid #253047;
@@ -243,12 +314,6 @@ hr {
 #playerAuthMessage {
     min-height: 20px;
     color: #aeb9cc;
-}
-
-.current-user {
-    margin: 12px 0 0;
-    color: #9eabc0;
-    font-size: 14px;
 }
 
 footer {
@@ -278,6 +343,10 @@ footer {
     }
 
     .admin-actions {
+        width: 100%;
+    }
+
+    .submission-actions {
         width: 100%;
     }
 }
