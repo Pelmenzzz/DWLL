@@ -350,3 +350,118 @@ footer {
         width: 100%;
     }
 }
+/* =====================================================
+   RGB NEON GLOW FOR LEVEL CARDS
+   ===================================================== */
+
+.level {
+    position: relative;
+    overflow: visible;
+    border: 1px solid transparent;
+
+    animation: rgbGlow 7s linear infinite;
+}
+
+/* RGB glowing border */
+.level::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 16px;
+
+    background: linear-gradient(
+        90deg,
+        #ff0000,
+        #ff7a00,
+        #ffff00,
+        #00ff66,
+        #00ffff,
+        #0066ff,
+        #8a00ff,
+        #ff00cc,
+        #ff0000
+    );
+
+    background-size: 400% 400%;
+
+    z-index: -1;
+
+    animation: rgbBorder 6s linear infinite;
+
+    filter: blur(5px);
+    opacity: 0.75;
+}
+
+/* Keep the card itself dark */
+.level::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: #111827;
+    border-radius: 14px;
+
+    z-index: -1;
+}
+
+/* Moving RGB colors */
+@keyframes rgbBorder {
+
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Additional soft glow */
+@keyframes rgbGlow {
+
+    0% {
+        box-shadow:
+            0 0 7px rgba(255, 0, 0, 0.35),
+            0 0 18px rgba(255, 0, 0, 0.18);
+    }
+
+    16% {
+        box-shadow:
+            0 0 7px rgba(255, 170, 0, 0.35),
+            0 0 18px rgba(255, 170, 0, 0.18);
+    }
+
+    33% {
+        box-shadow:
+            0 0 7px rgba(0, 255, 80, 0.35),
+            0 0 18px rgba(0, 255, 80, 0.18);
+    }
+
+    50% {
+        box-shadow:
+            0 0 7px rgba(0, 220, 255, 0.35),
+            0 0 18px rgba(0, 220, 255, 0.18);
+    }
+
+    66% {
+        box-shadow:
+            0 0 7px rgba(70, 80, 255, 0.35),
+            0 0 18px rgba(70, 80, 255, 0.18);
+    }
+
+    83% {
+        box-shadow:
+            0 0 7px rgba(190, 0, 255, 0.35),
+            0 0 18px rgba(190, 0, 255, 0.18);
+    }
+
+    100% {
+        box-shadow:
+            0 0 7px rgba(255, 0, 0, 0.35),
+            0 0 18px rgba(255, 0, 0, 0.18);
+    }
+}
