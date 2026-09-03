@@ -465,3 +465,79 @@ footer {
             0 0 18px rgba(255, 0, 0, 0.18);
     }
 }
+/* =====================================================
+   LEVEL CARDS - APPEAR ANIMATION
+   ===================================================== */
+
+.level {
+    animation:
+        levelAppear 0.6s ease-out both,
+        rgbGlow 7s linear infinite;
+
+    transform-origin: center;
+}
+
+/* Каждый следующий уровень появляется чуть позже */
+.level:nth-child(1) {
+    animation-delay: 0s, 0s;
+}
+
+.level:nth-child(2) {
+    animation-delay: 0.08s, 0s;
+}
+
+.level:nth-child(3) {
+    animation-delay: 0.16s, 0s;
+}
+
+.level:nth-child(4) {
+    animation-delay: 0.24s, 0s;
+}
+
+.level:nth-child(5) {
+    animation-delay: 0.32s, 0s;
+}
+
+.level:nth-child(6) {
+    animation-delay: 0.40s, 0s;
+}
+
+.level:nth-child(7) {
+    animation-delay: 0.48s, 0s;
+}
+
+.level:nth-child(8) {
+    animation-delay: 0.56s, 0s;
+}
+
+.level:nth-child(9) {
+    animation-delay: 0.64s, 0s;
+}
+
+.level:nth-child(10) {
+    animation-delay: 0.72s, 0s;
+}
+
+
+/* Сама анимация появления */
+
+@keyframes levelAppear {
+
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+        filter: blur(4px);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.005);
+        filter: blur(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
