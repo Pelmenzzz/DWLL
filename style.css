@@ -6,7 +6,7 @@ body {
     margin: 0;
     font-family: Arial, sans-serif;
     background: #0b0f18;
-    color: #ffffff;
+    color: #fff;
 }
 
 header {
@@ -48,6 +48,13 @@ button.secondary {
     background: #273249;
 }
 
+button.link-button {
+    background: transparent;
+    padding: 0;
+    color: #7ea0ff;
+    font-size: inherit;
+}
+
 main {
     width: min(1000px, calc(100% - 30px));
     margin: 30px auto;
@@ -67,7 +74,7 @@ main {
     border-radius: 16px;
     padding: 22px;
     margin-bottom: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
 }
 
 .small-card {
@@ -126,7 +133,7 @@ input:focus {
 
 .level .rank,
 .level .level-info h3 {
-    color: #ffffff;
+    color: #fff;
 }
 
 .level.rank-1 .rank,
@@ -162,6 +169,10 @@ input:focus {
     color: #7ea0ff;
     text-decoration: none;
     font-weight: 700;
+}
+
+.level-info a:hover {
+    text-decoration: underline;
 }
 
 .admin-level {
@@ -228,9 +239,16 @@ hr {
 
 #adminLoginMessage,
 #addLevelMessage,
-#submitMessage {
+#submitMessage,
+#playerAuthMessage {
     min-height: 20px;
     color: #aeb9cc;
+}
+
+.current-user {
+    margin: 12px 0 0;
+    color: #9eabc0;
+    font-size: 14px;
 }
 
 footer {
