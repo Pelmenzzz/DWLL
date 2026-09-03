@@ -2,104 +2,261 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Dash World Demon List</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet" href="style.css">
+    <!-- ============================= -->
+    <!-- SEO -->
+    <!-- ============================= -->
+
+    <title>Dash World Demon List — Hardest Levels</title>
+
+    <meta
+        name="description"
+        content="Dash World Demon List — a community leaderboard for the hardest Dash World levels. Discover difficult levels, creators, IDs, difficulties and YouTube previews."
+    >
+
+    <meta
+        name="keywords"
+        content="Dash World, Dash World Demon List, Demon List, hardest levels, Dash World levels, Roblox Geometry Dash, platformer levels"
+    >
+
+    <meta
+        name="robots"
+        content="index, follow"
+    >
+
+    <meta
+        name="author"
+        content="Dash World Demon List"
+    >
+
+    <meta
+        name="theme-color"
+        content="#111827"
+    >
+
+    <!-- Canonical URL -->
+    <link
+        rel="canonical"
+        href="https://YOUR-GITHUB-USERNAME.github.io/DWLL/"
+    >
+
+    <!-- ============================= -->
+    <!-- OPEN GRAPH -->
+    <!-- ============================= -->
+
+    <meta
+        property="og:type"
+        content="website"
+    >
+
+    <meta
+        property="og:title"
+        content="Dash World Demon List — Hardest Levels"
+    >
+
+    <meta
+        property="og:description"
+        content="Discover the hardest Dash World levels, their creators, difficulties and YouTube previews."
+    >
+
+    <meta
+        property="og:url"
+        content="https://Pelmenzzz.github.io/DWLL/"
+    >
+
+    <meta
+        property="og:site_name"
+        content="Dash World Demon List"
+    >
+
+    <!-- ============================= -->
+    <!-- TWITTER / SOCIAL PREVIEW -->
+    <!-- ============================= -->
+
+    <meta
+        name="twitter:card"
+        content="summary"
+    >
+
+    <meta
+        name="twitter:title"
+        content="Dash World Demon List"
+    >
+
+    <meta
+        name="twitter:description"
+        content="Community leaderboard for the hardest Dash World levels."
+    >
+
+    <!-- ============================= -->
+    <!-- STRUCTURED DATA -->
+    <!-- ============================= -->
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Dash World Demon List",
+        "alternateName": "DWLL",
+        "description": "Community leaderboard for the hardest Dash World levels.",
+        "url": "https://Pelmenzzz.github.io/DWLL/"
+    }
+    </script>
+
+    <!-- ============================= -->
+    <!-- STYLE -->
+    <!-- ============================= -->
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 </head>
 
 <body>
 
-<header class="site-header">
+    <!-- ============================= -->
+    <!-- HEADER -->
+    <!-- ============================= -->
 
-    <h1>Dash World Demon List</h1>
+    <header class="site-header">
 
-    <div class="made-with-chatgpt">
-        Сделано с ChatGPT
-    </div>
+        <h1>
+            Dash World Demon List
+        </h1>
 
-    <nav class="main-nav">
+        <div class="made-with-chatgpt">
+            Сделано с ChatGPT
+        </div>
 
-        <button onclick="showPage('list')">
-            Demon List
-        </button>
+        <!-- ============================= -->
+        <!-- NAVIGATION -->
+        <!-- ============================= -->
 
-        <button onclick="showPage('submit')">
-            Submit Level
-        </button>
+        <nav>
 
-        <button id="loginNavButton" onclick="showPage('login')">
-            Login
-        </button>
+            <button
+                onclick="showPage('list')"
+            >
+                Demon List
+            </button>
 
-        <button id="registerNavButton" onclick="showPage('register')">
-            Register
-        </button>
+            <button
+                onclick="showPage('submit')"
+            >
+                Submit Level
+            </button>
 
-        <button id="profileNavButton"
+            <button
+                id="loginButton"
+                onclick="showPage('login')"
+            >
+                Login
+            </button>
+
+            <button
+                id="registerButton"
+                onclick="showPage('register')"
+            >
+                Register
+            </button>
+
+            <button
+                id="profileButton"
                 class="hidden"
-                onclick="showPage('profile')">
-            My Profile
-        </button>
+                onclick="showPage('profile')"
+            >
+                My Profile
+            </button>
 
-        <button id="logoutNavButton"
+            <button
+                id="logoutButton"
                 class="hidden"
-                onclick="playerLogout()">
-            Logout
-        </button>
+                onclick="playerLogout()"
+            >
+                Logout
+            </button>
 
-        <button id="adminLoginButton"
-                onclick="openAdminLogin()">
-            Admin Login
-        </button>
+            <button
+                onclick="showPage('adminLogin')"
+            >
+                Admin Login
+            </button>
 
-        <button id="adminPanelButton"
+            <button
+                id="adminPanelButton"
                 class="hidden"
-                onclick="showPage('admin')">
-            Admin Panel
-        </button>
+                onclick="showPage('admin')"
+            >
+                Admin Panel
+            </button>
 
-    </nav>
+        </nav>
 
-</header>
+    </header>
 
 
-<main>
+    <!-- ============================= -->
+    <!-- MAIN -->
+    <!-- ============================= -->
 
-    <!-- ================= LIST ================= -->
+    <main>
 
-    <section id="listPage" class="page">
 
-        <div class="card">
+        <!-- ============================= -->
+        <!-- DEMON LIST -->
+        <!-- ============================= -->
 
-            <h2>Demon List</h2>
+        <section
+            id="listPage"
+            class="page"
+        >
+
+            <h2>
+                Hardest Dash World Levels
+            </h2>
+
+            <p>
+                Explore the hardest levels in the
+                Dash World Demon List.
+            </p>
 
             <input
                 id="searchInput"
-                type="text"
+                type="search"
                 placeholder="Search levels..."
+                aria-label="Search levels"
             >
 
-        </div>
+            <div
+                id="levels-container"
+            >
+                Loading levels...
+            </div>
 
-        <div id="levels-container">
-            <p>Loading levels...</p>
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= SUBMIT ================= -->
+        <!-- ============================= -->
+        <!-- SUBMIT LEVEL -->
+        <!-- ============================= -->
 
-    <section id="submitPage" class="page hidden">
+        <section
+            id="submitPage"
+            class="page hidden"
+        >
 
-        <div class="card">
-
-            <h2>Submit Level</h2>
+            <h2>
+                Submit a Level
+            </h2>
 
             <p>
-                Submit your level for review.
+                Submit a level to the Dash World Demon List.
             </p>
 
             <input
@@ -129,225 +286,289 @@
             <input
                 id="submitYoutube"
                 type="url"
-                placeholder="YouTube Video URL (optional)"
+                placeholder="YouTube URL (optional)"
             >
 
-            <button onclick="submitLevel()">
+            <button
+                onclick="submitLevel()"
+            >
                 Submit Level
             </button>
 
-            <p id="submitMessage"></p>
+            <p
+                id="submitMessage"
+            ></p>
 
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= LOGIN ================= -->
+        <!-- ============================= -->
+        <!-- LOGIN -->
+        <!-- ============================= -->
 
-    <section id="loginPage" class="page hidden">
+        <section
+            id="loginPage"
+            class="page hidden"
+        >
 
-        <div class="card">
-
-            <h2>Player Login</h2>
+            <h2>
+                Player Login
+            </h2>
 
             <input
                 id="loginEmail"
                 type="email"
                 placeholder="Email"
+                autocomplete="email"
             >
 
             <input
                 id="loginPassword"
                 type="password"
                 placeholder="Password"
+                autocomplete="current-password"
             >
 
-            <button onclick="playerLogin()">
+            <button
+                onclick="playerLogin()"
+            >
                 Login
             </button>
 
-            <p id="loginMessage"></p>
+            <p
+                id="loginMessage"
+            ></p>
 
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= REGISTER ================= -->
+        <!-- ============================= -->
+        <!-- REGISTER -->
+        <!-- ============================= -->
 
-    <section id="registerPage" class="page hidden">
+        <section
+            id="registerPage"
+            class="page hidden"
+        >
 
-        <div class="card">
-
-            <h2>Create Account</h2>
+            <h2>
+                Create Account
+            </h2>
 
             <input
                 id="registerUsername"
                 type="text"
                 placeholder="Username"
+                autocomplete="username"
             >
 
             <input
                 id="registerEmail"
                 type="email"
                 placeholder="Email"
+                autocomplete="email"
             >
 
             <input
                 id="registerPassword"
                 type="password"
                 placeholder="Password"
+                autocomplete="new-password"
             >
 
-            <button onclick="registerPlayer()">
+            <button
+                onclick="registerPlayer()"
+            >
                 Register
             </button>
 
-            <p id="registerMessage"></p>
+            <p
+                id="registerMessage"
+            ></p>
 
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= PROFILE ================= -->
+        <!-- ============================= -->
+        <!-- PROFILE -->
+        <!-- ============================= -->
 
-    <section id="profilePage" class="page hidden">
+        <section
+            id="profilePage"
+            class="page hidden"
+        >
 
-        <div class="card">
+            <h2>
+                My Profile
+            </h2>
 
-            <h2>My Profile</h2>
-
-            <div class="profile-info">
+            <div class="profile-card">
 
                 <p>
-                    <strong>Username:</strong>
-                    <span id="profileUsername">Player</span>
+                    <strong>
+                        Username:
+                    </strong>
+
+                    <span
+                        id="profileUsername"
+                    >
+                        —
+                    </span>
                 </p>
 
                 <p>
-                    <strong>Email:</strong>
-                    <span id="profileEmail"></span>
+                    <strong>
+                        Email:
+                    </strong>
+
+                    <span
+                        id="profileEmail"
+                    >
+                        —
+                    </span>
                 </p>
 
                 <p>
-                    <strong>Role:</strong>
-                    <span id="profileRole">player</span>
+                    <strong>
+                        Role:
+                    </strong>
+
+                    <span
+                        id="profileRole"
+                    >
+                        —
+                    </span>
                 </p>
 
             </div>
 
-            <hr>
 
-            <h3>My Submissions</h3>
+            <h3>
+                My Submissions
+            </h3>
 
-            <div id="my-submissions">
-                <p>Loading...</p>
+            <div
+                id="my-submissions"
+            >
+                Loading...
             </div>
 
-            <button onclick="playerLogout()">
-                Logout
-            </button>
-
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= ADMIN LOGIN ================= -->
+        <!-- ============================= -->
+        <!-- ADMIN LOGIN -->
+        <!-- ============================= -->
 
-    <section id="adminLoginPage" class="page hidden">
+        <section
+            id="adminLoginPage"
+            class="page hidden"
+        >
 
-        <div class="card">
-
-            <h2>Admin Login</h2>
+            <h2>
+                Admin Login
+            </h2>
 
             <input
                 id="adminId"
                 type="email"
                 placeholder="Admin Email"
+                autocomplete="username"
             >
 
             <input
                 id="adminPassword"
                 type="password"
-                placeholder="Password"
+                placeholder="Admin Password"
+                autocomplete="current-password"
             >
 
-            <button onclick="adminLogin()">
-                Login
+            <button
+                onclick="adminLogin()"
+            >
+                Login as Admin
             </button>
 
-            <p id="adminLoginMessage"></p>
+            <p
+                id="adminLoginMessage"
+            ></p>
 
-        </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= ADMIN ================= -->
+        <!-- ============================= -->
+        <!-- ADMIN PANEL -->
+        <!-- ============================= -->
 
-    <section id="adminPage" class="page hidden">
+        <section
+            id="adminPage"
+            class="page hidden"
+        >
 
-        <div class="card">
-
-            <h2>Admin Panel</h2>
+            <h2>
+                Admin Panel
+            </h2>
 
 
             <!-- ADD / EDIT LEVEL -->
 
-            <h3 id="formTitle">
-                Add Level
+            <div class="admin-card">
+
+                <h3>
+                    Add / Edit Level
+                </h3>
+
+                <input
+                    id="adminLevelName"
+                    type="text"
+                    placeholder="Level Name"
+                >
+
+                <input
+                    id="adminLevelId"
+                    type="text"
+                    placeholder="Level ID"
+                >
+
+                <input
+                    id="adminCreatorName"
+                    type="text"
+                    placeholder="Creator Name"
+                >
+
+                <input
+                    id="adminDifficulty"
+                    type="text"
+                    placeholder="Difficulty"
+                >
+
+                <input
+                    id="adminYoutube"
+                    type="url"
+                    placeholder="YouTube URL (optional)"
+                >
+
+                <button
+                    id="adminAddButton"
+                    onclick="addLevel()"
+                >
+                    Add Level
+                </button>
+
+            </div>
+
+
+            <!-- ADMIN LEVELS -->
+
+            <h3>
+                Current Levels
             </h3>
 
-            <input
-                id="levelName"
-                type="text"
-                placeholder="Level Name"
+            <div
+                id="admin-levels-container"
             >
-
-            <input
-                id="levelId"
-                type="text"
-                placeholder="Level ID"
-            >
-
-            <input
-                id="creatorName"
-                type="text"
-                placeholder="Creator Name"
-            >
-
-            <input
-                id="difficulty"
-                type="text"
-                placeholder="Difficulty"
-            >
-
-            <input
-                id="youtubeUrl"
-                type="url"
-                placeholder="YouTube Video URL (optional)"
-            >
-
-            <button
-                id="saveLevelButton"
-                onclick="saveLevel()">
-                Add Level
-            </button>
-
-            <button
-                id="cancelEditButton"
-                class="hidden"
-                onclick="cancelEdit()">
-                Cancel
-            </button>
-
-            <p id="addLevelMessage"></p>
-
-
-            <hr>
+                Loading...
+            </div>
 
 
             <!-- SUBMISSIONS -->
@@ -356,54 +577,32 @@
                 Player Submissions
             </h3>
 
-            <div id="admin-submissions-container">
+            <div
+                id="admin-submissions-container"
+            >
                 Loading...
             </div>
 
+        </section>
 
-            <hr>
-
-
-            <!-- CURRENT LEVELS -->
-
-            <h3>
-                Current Levels
-            </h3>
-
-            <div id="admin-levels-container">
-                Loading...
-            </div>
+    </main>
 
 
-            <hr>
+    <!-- ============================= -->
+    <!-- SUPABASE -->
+    <!-- ============================= -->
 
-            <button onclick="adminLogout()">
-                Admin Logout
-            </button>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
 
-        </div>
+    <!-- ============================= -->
+    <!-- MAIN JAVASCRIPT -->
+    <!-- ============================= -->
 
-    </section>
-
-</main>
-
-
-<footer>
-
-    <p>
-        Dash World Demon List
-    </p>
-
-</footer>
-
-
-<!-- SUPABASE -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- YOUR SCRIPT -->
-
-<script src="script.js"></script>
+    <script
+        src="script.js"
+    ></script>
 
 </body>
 </html>
