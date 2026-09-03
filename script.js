@@ -1,896 +1,558 @@
-// ======================================================
-// DASH WORLD DEMON LIST
-// ======================================================
+// ==========================================
+// DASH WORLD DEMON LIST — script.js
+// ==========================================
 
+// ---------- SUPABASE CONFIG ----------
 
-// ======================================================
-// SUPABASE
-// ======================================================
-
-// ВСТАВЬ СЮДА СВОИ СТАРЫЕ ЗНАЧЕНИЯ
-
-const SUPABASE_URL =
-    "https://irxkvnromngihugetrwf.supabase.co";
-
-const SUPABASE_KEY =
-    "sb_publishable_R7MlVHvKXHn9n49mRPpo3g_-J2lwfWR";
-
+const SUPABASE_URL = "https://irxkvnromngihugetrwf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_R7MlVHvKXHn9n49mRPpo3g_-J2lwfWR";
 
 let supabaseClient = null;
 
 if (
-    window.supabase &&
-    SUPABASE_URL !== "https://irxkvnromngihugetrwf.supabase.co" &&
-    SUPABASE_KEY !== "sb_publishable_R7MlVHvKXHn9n49mRPpo3g_-J2lwfWR"
+    SUPABASE_URL &&
+    SUPABASE_KEY &&
+    !SUPABASE_URL.includes("PASTE_") &&
+    !SUPABASE_KEY.includes("PASTE_")
 ) {
-
-    supabaseClient =
-        window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        );
+    supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+} else {
+    console.warn("Supabase is not configured.");
 }
 
 
-// ======================================================
-// VARIABLES
-// ======================================================
+// ==========================================
+// GLOBAL VARIABLES
+// ==========================================
 
 let currentUser = null;
 let currentProfile = null;
-
 let editingLevelId = null;
 
 
-// ======================================================
-// SHORTCUT
-// ======================================================
+// ==========================================
+// HELPERS
+// ==========================================
 
 function $(id) {
     return document.getElementById(id);
 }
 
-
-// ======================================================
-// HTML SECURITY
-// ======================================================
-
 function escapeHTML(value) {
+    if (value === null || value === undefined) return "";
 
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-
-// ======================================================
-// MESSAGES
-// ======================================================
-
-function message(id, text, success = false) {
-
+function showMessage(id, message, success = false) {
     const element = $(id);
 
     if (!element) return;
 
-    element.textContent = text;
+    element.textContent = message;
+    element.style.color = success ? "#6cff9b" : "#ff7373";
+}
 
-    element.style.color =
-        success ? "#4ade80" : "";
+function clearMessage(id) {
+    const element = $(id);
 
+    if (element) {
+        element.textContent = "";
+    }
 }
 
 
-// ======================================================
-// PAGE SYSTEM
-// ======================================================
+// ==========================================
+// PAGE NAVIGATION
+// ==========================================
 
-async function showPage(page) {
-
-    document
-        .querySelectorAll(".page")
-        .forEach(element => {
-
-            element.classList.add("hidden");
-
-        });
-
-
-    const pages = {
-
-        list: "listPage",
-
-        submit: "submitPage",
-
-        login: "loginPage",
-
-        register: "registerPage",
-
-        profile: "profilePage",
-
-        adminLogin: "adminLoginPage",
-
-        admin: "adminPage"
-
-    };
-
-
-    // Submit requires login
-
-    if (
-        page === "submit" &&
-        !currentUser
-    ) {
-
-        page = "login";
-
-        message(
-            "loginMessage",
-            "Please log in before submitting a level."
-        );
-
-    }
-
-
-    // Profile requires login
-
-    if (
-        page === "profile" &&
-        !currentUser
-    ) {
-
-        page = "login";
-
-    }
-
-
-    // Admin page requires admin
-
-    if (page === "admin") {
-
-        const admin =
-            await isAdmin();
-
-        if (!admin) {
-
-            page = "adminLogin";
-
-        }
-
-    }
-
-
-    const element =
-        $(pages[page]);
-
-    if (element) {
-
-        element.classList.remove("hidden");
-
-    }
-
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
+function showPage(page) {
+    document.querySelectorAll(".page").forEach((element) => {
+        element.classList.add("hidden");
     });
 
+    const pageMap = {
+        list: "listPage",
+        submit: "submitPage",
+        login: "loginPage",
+        register: "registerPage",
+        profile: "profilePage",
+        adminLogin: "adminLoginPage",
+        admin: "adminPage"
+    };
 
-    // Load page data
+    const pageId = pageMap[page];
+
+    if (!pageId) return;
+
+    const target = $(pageId);
+
+    if (!target) return;
+
+    // Submit requires login
+    if (page === "submit" && !currentUser) {
+        showPage("login");
+        return;
+    }
+
+    // Profile requires login
+    if (page === "profile" && !currentUser) {
+        showPage("login");
+        return;
+    }
+
+    // Admin page requires admin
+    if (page === "admin") {
+        if (!currentUser || !isAdmin()) {
+            showPage("adminLogin");
+            return;
+        }
+    }
+
+    target.classList.remove("hidden");
 
     if (page === "list") {
-
-        await loadLevels();
-
+        loadLevels();
     }
 
     if (page === "profile") {
-
-        await loadProfile();
-
+        loadProfile();
+        loadMySubmissions();
     }
 
     if (page === "admin") {
-
-        await loadAdminSubmissions();
-
-        await loadAdminLevels();
-
+        loadAdminSubmissions();
+        loadAdminLevels();
     }
-
 }
 
 
-// ======================================================
+// ==========================================
 // AUTH UI
-// ======================================================
+// ==========================================
 
 function updateAuthUI() {
-
-    const loggedIn =
-        !!currentUser;
-
-
-    $("loginNavButton")
-        ?.classList.toggle(
-            "hidden",
-            loggedIn
-        );
-
-
-    $("registerNavButton")
-        ?.classList.toggle(
-            "hidden",
-            loggedIn
-        );
-
-
-    $("profileNavButton")
-        ?.classList.toggle(
-            "hidden",
-            !loggedIn
-        );
-
-
-    $("logoutNavButton")
-        ?.classList.toggle(
-            "hidden",
-            !loggedIn
-        );
-
-
-    const admin =
-        currentProfile?.role === "admin";
-
-
-    $("adminPanelButton")
-        ?.classList.toggle(
-            "hidden",
-            !admin
-        );
-
-}
-
-
-// ======================================================
-// CURRENT USER
-// ======================================================
-
-async function loadCurrentUser() {
-
-    if (!supabaseClient) {
-
-        console.error(
-            "Supabase is not configured."
-        );
-
-        return;
-
-    }
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .auth
-            .getSession();
-
-
-    if (error) {
-
-        console.error(error);
-
-        return;
-
-    }
-
-
-    currentUser =
-        data.session?.user || null;
-
+    const loginButton = $("loginButton");
+    const registerButton = $("registerButton");
+    const profileButton = $("profileButton");
+    const logoutButton = $("logoutButton");
+    const adminPanelButton = $("adminPanelButton");
 
     if (currentUser) {
+        if (loginButton) loginButton.classList.add("hidden");
+        if (registerButton) registerButton.classList.add("hidden");
 
-        await loadCurrentProfile();
+        if (profileButton) profileButton.classList.remove("hidden");
+        if (logoutButton) logoutButton.classList.remove("hidden");
 
+        if (currentProfile && currentProfile.role === "admin") {
+            if (adminPanelButton) {
+                adminPanelButton.classList.remove("hidden");
+            }
+        } else {
+            if (adminPanelButton) {
+                adminPanelButton.classList.add("hidden");
+            }
+        }
+    } else {
+        if (loginButton) loginButton.classList.remove("hidden");
+        if (registerButton) registerButton.classList.remove("hidden");
+
+        if (profileButton) profileButton.classList.add("hidden");
+        if (logoutButton) logoutButton.classList.add("hidden");
+        if (adminPanelButton) adminPanelButton.classList.add("hidden");
     }
-
-
-    updateAuthUI();
-
 }
 
 
-// ======================================================
-// PROFILE
-// ======================================================
+// ==========================================
+// LOAD CURRENT USER
+// ==========================================
+
+async function loadCurrentUser() {
+    if (!supabaseClient) return;
+
+    const {
+        data: { user },
+        error
+    } = await supabaseClient.auth.getUser();
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    currentUser = user || null;
+
+    if (currentUser) {
+        await loadCurrentProfile();
+    } else {
+        currentProfile = null;
+    }
+
+    updateAuthUI();
+}
+
+
+// ==========================================
+// LOAD PROFILE
+// ==========================================
 
 async function loadCurrentProfile() {
-
-    if (!currentUser) {
-
+    if (!supabaseClient || !currentUser) {
         currentProfile = null;
-
         return;
-
     }
 
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("profiles")
-            .select("*")
-            .eq("id", currentUser.id)
-            .maybeSingle();
-
+    const { data, error } = await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq("id", currentUser.id)
+        .maybeSingle();
 
     if (error) {
-
-        console.error(error);
-
+        console.error("Profile error:", error);
+        currentProfile = null;
         return;
-
     }
 
+    currentProfile = data || null;
+}
 
-    currentProfile = data;
-
-    updateAuthUI();
-
+function isAdmin() {
+    return (
+        currentProfile &&
+        currentProfile.role === "admin"
+    );
 }
 
 
-// ======================================================
-// ADMIN CHECK
-// ======================================================
-
-async function isAdmin() {
-
-    if (
-        !supabaseClient ||
-        !currentUser
-    ) {
-
-        return false;
-
-    }
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .rpc("is_admin");
-
-
-    if (error) {
-
-        console.error(error);
-
-        return false;
-
-    }
-
-
-    return data === true;
-
-}
-
-
-// ======================================================
+// ==========================================
 // PLAYER LOGIN
-// ======================================================
+// ==========================================
 
 async function playerLogin() {
-
     if (!supabaseClient) {
-
-        message(
+        showMessage(
             "loginMessage",
             "Supabase is not configured."
         );
-
         return;
-
     }
 
+    const email = $("loginEmail").value.trim();
+    const password = $("loginPassword").value;
 
-    const email =
-        $("loginEmail")
-            .value
-            .trim();
-
-
-    const password =
-        $("loginPassword")
-            .value;
-
+    clearMessage("loginMessage");
 
     if (!email || !password) {
-
-        message(
+        showMessage(
             "loginMessage",
-            "Enter email and password."
+            "Enter your email and password."
         );
-
         return;
-
     }
-
-
-    message(
-        "loginMessage",
-        "Logging in..."
-    );
-
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .auth
-            .signInWithPassword({
-
-                email: email,
-
-                password: password
-
-            });
-
+    } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
     if (error) {
-
-        console.error(error);
-
-        message(
+        showMessage(
             "loginMessage",
             error.message
         );
-
         return;
-
     }
 
-
-    currentUser =
-        data.user;
-
+    currentUser = data.user;
 
     await loadCurrentProfile();
 
+    updateAuthUI();
 
-    message(
+    showMessage(
         "loginMessage",
         "Login successful!",
         true
     );
 
-
-    updateAuthUI();
-
-
-    await showPage("profile");
-
+    setTimeout(() => {
+        showPage("list");
+    }, 700);
 }
 
 
-// ======================================================
-// REGISTER
-// ======================================================
+// ==========================================
+// PLAYER REGISTRATION
+// ==========================================
 
 async function registerPlayer() {
-
     if (!supabaseClient) {
-
-        message(
+        showMessage(
             "registerMessage",
             "Supabase is not configured."
         );
-
         return;
-
     }
 
+    const username = $("registerUsername").value.trim();
+    const email = $("registerEmail").value.trim();
+    const password = $("registerPassword").value;
 
-    const username =
-        $("registerUsername")
-            .value
-            .trim();
+    clearMessage("registerMessage");
 
-
-    const email =
-        $("registerEmail")
-            .value
-            .trim();
-
-
-    const password =
-        $("registerPassword")
-            .value;
-
-
-    if (
-        !username ||
-        !email ||
-        !password
-    ) {
-
-        message(
+    if (!username || !email || !password) {
+        showMessage(
             "registerMessage",
             "Fill in all fields."
         );
-
         return;
-
     }
-
-
-    if (username.length < 3) {
-
-        message(
-            "registerMessage",
-            "Username must contain at least 3 characters."
-        );
-
-        return;
-
-    }
-
 
     if (password.length < 6) {
-
-        message(
+        showMessage(
             "registerMessage",
-            "Password must contain at least 6 characters."
+            "Password must be at least 6 characters."
         );
-
         return;
-
     }
-
-
-    message(
-        "registerMessage",
-        "Creating account..."
-    );
-
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .auth
-            .signUp({
-
-                email: email,
-
-                password: password,
-
-                options: {
-
-                    data: {
-
-                        username: username
-
-                    }
-
-                }
-
-            });
-
+    } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+            data: {
+                username: username
+            }
+        }
+    });
 
     if (error) {
-
-        console.error(error);
-
-        message(
+        showMessage(
             "registerMessage",
             error.message
         );
-
         return;
-
     }
 
+    if (data.session) {
+        currentUser = data.user;
 
-    // Email confirmation may be enabled
+        await loadCurrentProfile();
 
-    if (!data.session) {
+        updateAuthUI();
 
-        message(
+        showMessage(
             "registerMessage",
-            "Account created! Check your email if confirmation is required.",
+            "Account created!",
             true
         );
 
-        return;
-
+        setTimeout(() => {
+            showPage("list");
+        }, 700);
+    } else {
+        showMessage(
+            "registerMessage",
+            "Account created! Check your email to confirm your account.",
+            true
+        );
     }
-
-
-    currentUser =
-        data.user;
-
-
-    await loadCurrentProfile();
-
-
-    updateAuthUI();
-
-
-    await showPage("profile");
-
 }
 
 
-// ======================================================
-// LOGOUT
-// ======================================================
+// ==========================================
+// PLAYER LOGOUT
+// ==========================================
 
 async function playerLogout() {
+    if (!supabaseClient) return;
 
-    if (supabaseClient) {
+    const { error } = await supabaseClient.auth.signOut();
 
-        await supabaseClient
-            .auth
-            .signOut();
-
+    if (error) {
+        console.error(error);
+        return;
     }
 
-
     currentUser = null;
-
     currentProfile = null;
-
-    editingLevelId = null;
-
 
     updateAuthUI();
 
-
-    await showPage("list");
-
+    showPage("list");
 }
 
 
-// ======================================================
-// PROFILE PAGE
-// ======================================================
+// ==========================================
+// PROFILE
+// ==========================================
 
 async function loadProfile() {
-
-    if (!currentUser) return;
-
+    if (!currentUser) {
+        showPage("login");
+        return;
+    }
 
     await loadCurrentProfile();
 
+    if ($("profileUsername")) {
+        $("profileUsername").textContent =
+            currentProfile?.username || "Player";
+    }
 
-    $("profileUsername")
-        .textContent =
-            currentProfile?.username ||
-            "Player";
+    if ($("profileEmail")) {
+        $("profileEmail").textContent =
+            currentUser.email || "";
+    }
 
+    if ($("profileRole")) {
+        $("profileRole").textContent =
+            currentProfile?.role || "player";
+    }
 
-    $("profileEmail")
-        .textContent =
-            currentUser.email ||
-            "";
-
-
-    $("profileRole")
-        .textContent =
-            currentProfile?.role ||
-            "player";
-
-
-    await loadMySubmissions();
-
+    updateAuthUI();
 }
 
 
-// ======================================================
-// MY SUBMISSIONS
-// ======================================================
+// ==========================================
+// PLAYER SUBMISSIONS
+// ==========================================
 
 async function loadMySubmissions() {
+    const container = $("my-submissions");
 
-    const container =
-        $("my-submissions");
+    if (!container || !currentUser || !supabaseClient) return;
 
-
-    if (
-        !container ||
-        !currentUser
-    ) {
-
-        return;
-
-    }
-
-
-    container.innerHTML =
-        "<p>Loading...</p>";
-
+    container.innerHTML = "Loading...";
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .select("*")
-            .eq(
-                "user_id",
-                currentUser.id
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
+    } = await supabaseClient
+        .from("submissions")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .order("created_at", {
+            ascending: false
+        });
 
     if (error) {
-
         console.error(error);
 
         container.innerHTML =
-            "<p>Could not load submissions.</p>";
+            "Failed to load submissions.";
 
         return;
-
     }
 
-
     if (!data || data.length === 0) {
-
         container.innerHTML =
             "<p>You have no submissions yet.</p>";
 
         return;
-
     }
 
+    container.innerHTML = data.map((submission) => {
+        return `
+            <div class="submission-card">
+                <h3>${escapeHTML(submission.level_name)}</h3>
 
-    container.innerHTML =
-        data.map(submission => {
+                <p>
+                    <strong>ID:</strong>
+                    ${escapeHTML(submission.level_id)}
+                </p>
 
-            return `
+                <p>
+                    <strong>Creator:</strong>
+                    ${escapeHTML(submission.creator_name)}
+                </p>
 
-                <div class="submission-card">
+                <p>
+                    <strong>Difficulty:</strong>
+                    ${escapeHTML(submission.difficulty || "—")}
+                </p>
 
-                    <h3>
-                        ${escapeHTML(
-                            submission.level_name
-                        )}
-                    </h3>
+                <p>
+                    <strong>Status:</strong>
+                    ${escapeHTML(submission.status)}
+                </p>
 
-                    <p>
-                        ID:
-                        ${escapeHTML(
-                            submission.level_id
-                        )}
-                    </p>
+                <p>
+                    <strong>Video:</strong>
+                    ${escapeHTML(submission.video_status || "pending")}
+                </p>
 
-                    <p>
-                        Creator:
-                        ${escapeHTML(
-                            submission.creator_name
-                        )}
-                    </p>
+                ${
+                    submission.admin_message
+                    ? `
+                        <p>
+                            <strong>Admin message:</strong>
+                            ${escapeHTML(submission.admin_message)}
+                        </p>
+                    `
+                    : ""
+                }
 
-                    <p>
-                        Difficulty:
-                        ${escapeHTML(
-                            submission.difficulty ||
-                            "Unknown"
-                        )}
-                    </p>
-
-                    <p>
-                        Status:
-                        <strong>
+                ${
+                    submission.video_rejection_reason
+                    ? `
+                        <p>
+                            <strong>Video reason:</strong>
                             ${escapeHTML(
-                                submission.status ||
-                                "pending"
+                                submission.video_rejection_reason
                             )}
-                        </strong>
-                    </p>
-
-                    ${
-                        submission.admin_message
-                        ?
-                        `<p>
-                            Admin:
-                            ${escapeHTML(
-                                submission.admin_message
-                            )}
-                        </p>`
-                        :
-                        ""
-                    }
-
-                </div>
-
-            `;
-
-        }).join("");
-
+                        </p>
+                    `
+                    : ""
+                }
+            </div>
+        `;
+    }).join("");
 }
 
 
-// ======================================================
+// ==========================================
 // SUBMIT LEVEL
-// ======================================================
+// ==========================================
 
 async function submitLevel() {
-
     if (!supabaseClient) {
-
-        message(
+        showMessage(
             "submitMessage",
             "Supabase is not configured."
         );
-
         return;
-
     }
-
 
     if (!currentUser) {
-
-        message(
-            "submitMessage",
-            "Please log in first."
-        );
-
+        showPage("login");
         return;
-
     }
 
+    const levelName = $("submitLevelName").value.trim();
+    const levelId = $("submitLevelId").value.trim();
+    const creatorName = $("submitCreatorName").value.trim();
+    const difficulty = $("submitDifficulty").value.trim();
+    const youtubeUrl = $("submitYoutube").value.trim();
 
-    const levelName =
-        $("submitLevelName")
-            .value
-            .trim();
-
-
-    const levelId =
-        $("submitLevelId")
-            .value
-            .trim();
-
-
-    const creatorName =
-        $("submitCreatorName")
-            .value
-            .trim();
-
-
-    const difficulty =
-        $("submitDifficulty")
-            .value
-            .trim();
-
-
-    const youtubeUrl =
-        $("submitYoutube")
-            .value
-            .trim();
-
+    clearMessage("submitMessage");
 
     if (
         !levelName ||
@@ -898,580 +560,315 @@ async function submitLevel() {
         !creatorName ||
         !difficulty
     ) {
-
-        message(
+        showMessage(
             "submitMessage",
             "Fill in all required fields."
         );
-
         return;
-
     }
-
-
-    message(
-        "submitMessage",
-        "Submitting..."
-    );
-
 
     const {
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .insert({
-
-                user_id:
-                    currentUser.id,
-
-                level_name:
-                    levelName,
-
-                level_id:
-                    levelId,
-
-                creator_name:
-                    creatorName,
-
-                difficulty:
-                    difficulty,
-
-                youtube_url:
-                    youtubeUrl ||
-                    null,
-
-                status:
-                    "pending",
-
-                video_status:
-                    youtubeUrl
-                        ? "pending"
-                        : "pending"
-
-            });
-
+    } = await supabaseClient
+        .from("submissions")
+        .insert({
+            user_id: currentUser.id,
+            level_name: levelName,
+            level_id: levelId,
+            creator_name: creatorName,
+            difficulty: difficulty,
+            youtube_url: youtubeUrl || null,
+            status: "pending",
+            video_status: youtubeUrl
+                ? "pending"
+                : "rejected"
+        });
 
     if (error) {
-
         console.error(error);
 
-        message(
+        showMessage(
             "submitMessage",
-            "Could not submit: " +
             error.message
         );
 
         return;
-
     }
 
-
-    $("submitLevelName").value = "";
-
-    $("submitLevelId").value = "";
-
-    $("submitCreatorName").value = "";
-
-    $("submitDifficulty").value = "";
-
-    $("submitYoutube").value = "";
-
-
-    message(
+    showMessage(
         "submitMessage",
         "Level submitted successfully!",
         true
     );
 
+    $("submitLevelName").value = "";
+    $("submitLevelId").value = "";
+    $("submitCreatorName").value = "";
+    $("submitDifficulty").value = "";
+    $("submitYoutube").value = "";
 }
 
 
-// ======================================================
+// ==========================================
 // LOAD LEVELS
-// ======================================================
+// ==========================================
 
 async function loadLevels() {
+    const container = $("levels-container");
 
-    const container =
-        $("levels-container");
+    if (!container || !supabaseClient) return;
 
-
-    if (!container) return;
-
-
-    if (!supabaseClient) {
-
-        container.innerHTML =
-            "<p>Supabase is not configured.</p>";
-
-        return;
-
-    }
-
+    container.innerHTML = "Loading levels...";
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("levels")
-            .select("*")
-            .order(
-                "position",
-                {
-                    ascending: true
-                }
-            );
-
+    } = await supabaseClient
+        .from("levels")
+        .select("*")
+        .order("position", {
+            ascending: true
+        });
 
     if (error) {
-
         console.error(error);
 
         container.innerHTML =
-            "<p>Could not load levels.</p>";
+            "Failed to load levels.";
 
         return;
-
     }
 
-
     renderLevels(data || []);
-
 }
 
 
-// ======================================================
+// ==========================================
 // RENDER LEVELS
-// ======================================================
+// ==========================================
 
 function renderLevels(levels) {
-
-    const container =
-        $("levels-container");
-
+    const container = $("levels-container");
 
     if (!container) return;
 
-
     if (!levels.length) {
-
         container.innerHTML =
-            `
-
-            <div class="card">
-
-                <p>
-                    No levels have been added yet.
-                </p>
-
-            </div>
-
-            `;
+            "<p>No levels have been added yet.</p>";
 
         return;
-
     }
 
+    container.innerHTML = levels.map((level) => {
+        const position = Number(level.position);
 
-    container.innerHTML =
-        levels.map(level => {
+        let rankClass = "";
 
-            let youtube = "";
+        if (position === 1) {
+            rankClass = "rank-1";
+        } else if (position === 2) {
+            rankClass = "rank-2";
+        } else if (position === 3) {
+            rankClass = "rank-3";
+        }
 
-            if (level.youtube_url) {
+        return `
+            <div class="level ${rankClass}">
 
-                youtube = `
+                <div class="level-rank">
+                    #${position}
+                </div>
 
-                    <a
-                        href="${escapeHTML(
-                            level.youtube_url
-                        )}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        YouTube Preview
-                    </a>
+                <div class="level-info">
 
-                `;
+                    <h2>
+                        ${escapeHTML(level.level_name)}
+                    </h2>
 
-            }
+                    <p>
+                        ID:
+                        ${escapeHTML(level.level_id)}
+                    </p>
 
+                    <p>
+                        Creator:
+                        ${escapeHTML(level.creator_name)}
+                    </p>
 
-            return `
-
-                <div class="level">
-
-                    <div class="rank">
-                        #${escapeHTML(
-                            level.position
-                        )}
-                    </div>
-
-                    <div class="level-info">
-
-                        <h3>
-                            ${escapeHTML(
-                                level.level_name
-                            )}
-                        </h3>
-
-                        <p>
-                            ID:
-                            ${escapeHTML(
-                                level.level_id
-                            )}
-                        </p>
-
-                        <p>
-                            Creator:
-                            ${escapeHTML(
-                                level.creator_name
-                            )}
-                        </p>
-
-                        <p>
-                            Difficulty:
-                            ${escapeHTML(
-                                level.difficulty ||
-                                "Unknown"
-                            )}
-                        </p>
-
-                        ${youtube}
-
-                    </div>
+                    <p>
+                        Difficulty:
+                        ${escapeHTML(level.difficulty)}
+                    </p>
 
                 </div>
 
-            `;
+                ${
+                    level.youtube_url
+                    ? `
+                        <a
+                            href="${escapeHTML(level.youtube_url)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="youtube-button"
+                        >
+                            ▶ YouTube
+                        </a>
+                    `
+                    : ""
+                }
 
-        }).join("");
-
+            </div>
+        `;
+    }).join("");
 }
 
 
-// ======================================================
-// ADMIN LOGIN
-// ======================================================
+// ==========================================
+// SEARCH
+// ==========================================
 
-async function openAdminLogin() {
+function searchLevels() {
+    const searchInput = $("searchInput");
 
-    if (await isAdmin()) {
+    if (!searchInput) return;
 
-        await showPage("admin");
+    const query =
+        searchInput.value
+            .trim()
+            .toLowerCase();
 
-        return;
+    document.querySelectorAll(
+        "#levels-container .level"
+    ).forEach((level) => {
+        const text =
+            level.textContent.toLowerCase();
 
-    }
-
-
-    await showPage("adminLogin");
-
+        if (text.includes(query)) {
+            level.style.display = "";
+        } else {
+            level.style.display = "none";
+        }
+    });
 }
 
 
-// ======================================================
+// ==========================================
 // ADMIN LOGIN
-// ======================================================
+// ==========================================
 
 async function adminLogin() {
-
     if (!supabaseClient) {
-
-        message(
+        showMessage(
             "adminLoginMessage",
             "Supabase is not configured."
         );
-
         return;
-
     }
 
+    const email = $("adminId").value.trim();
+    const password = $("adminPassword").value;
 
-    const email =
-        $("adminId")
-            .value
-            .trim();
-
-
-    const password =
-        $("adminPassword")
-            .value;
-
+    clearMessage("adminLoginMessage");
 
     if (!email || !password) {
-
-        message(
+        showMessage(
             "adminLoginMessage",
-            "Enter email and password."
+            "Enter admin email and password."
         );
-
         return;
-
     }
-
-
-    message(
-        "adminLoginMessage",
-        "Logging in..."
-    );
-
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .auth
-            .signInWithPassword({
-
-                email: email,
-
-                password: password
-
-            });
-
+    } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
 
     if (error) {
-
-        console.error(error);
-
-        message(
+        showMessage(
             "adminLoginMessage",
-            "Login failed."
+            error.message
         );
-
         return;
-
     }
 
-
-    currentUser =
-        data.user;
-
+    currentUser = data.user;
 
     await loadCurrentProfile();
 
-
-    if (!(await isAdmin())) {
-
-        await supabaseClient
-            .auth
-            .signOut();
-
+    if (!isAdmin()) {
+        await supabaseClient.auth.signOut();
 
         currentUser = null;
-
         currentProfile = null;
-
-
-        message(
-            "adminLoginMessage",
-            "This account is not an administrator."
-        );
-
 
         updateAuthUI();
 
-        return;
-
-    }
-
-
-    updateAuthUI();
-
-
-    await showPage("admin");
-
-}
-
-
-// ======================================================
-// ADMIN LOGOUT
-// ======================================================
-
-async function adminLogout() {
-
-    await playerLogout();
-
-}
-
-
-// ======================================================
-// NORMALIZE POSITIONS
-// ======================================================
-
-async function normalizePositions() {
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("levels")
-            .select("id, position")
-            .order(
-                "position",
-                {
-                    ascending: true
-                }
-            )
-            .order(
-                "id",
-                {
-                    ascending: true
-                }
-            );
-
-
-    if (error) {
-
-        console.error(error);
-
-        return false;
-
-    }
-
-
-    for (
-        let i = 0;
-        i < data.length;
-        i++
-    ) {
-
-        const wantedPosition =
-            i + 1;
-
-
-        if (
-            Number(
-                data[i].position
-            )
-            !==
-            wantedPosition
-        ) {
-
-            const {
-                error: updateError
-            } =
-                await supabaseClient
-                    .from("levels")
-                    .update({
-
-                        position:
-                            wantedPosition
-
-                    })
-                    .eq(
-                        "id",
-                        data[i].id
-                    );
-
-
-            if (updateError) {
-
-                console.error(
-                    updateError
-                );
-
-                return false;
-
-            }
-
-        }
-
-    }
-
-
-    return true;
-
-}
-
-
-// ======================================================
-// NEXT POSITION
-// ======================================================
-
-async function getNextPosition() {
-
-    const {
-        count,
-        error
-    } =
-        await supabaseClient
-            .from("levels")
-            .select(
-                "id",
-                {
-                    count: "exact",
-                    head: true
-                }
-            );
-
-
-    if (error) {
-
-        console.error(error);
-
-        return null;
-
-    }
-
-
-    return Number(count || 0) + 1;
-
-}
-
-
-// ======================================================
-// SAVE / ADD LEVEL
-// ======================================================
-
-async function saveLevel() {
-
-    if (!(await isAdmin())) {
-
-        message(
-            "addLevelMessage",
-            "You do not have administrator access."
+        showMessage(
+            "adminLoginMessage",
+            "This account is not an admin."
         );
 
         return;
-
     }
 
+    updateAuthUI();
 
-    const levelName =
-        $("levelName")
-            .value
-            .trim();
+    showMessage(
+        "adminLoginMessage",
+        "Admin login successful!",
+        true
+    );
 
-
-    const levelId =
-        $("levelId")
-            .value
-            .trim();
-
-
-    const creatorName =
-        $("creatorName")
-            .value
-            .trim();
+    setTimeout(() => {
+        showPage("admin");
+    }, 700);
+}
 
 
-    const difficulty =
-        $("difficulty")
-            .value
-            .trim();
+// ==========================================
+// POSITION HELPERS
+// ==========================================
+
+async function getNextPosition() {
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("levels")
+        .select("position")
+        .order("position", {
+            ascending: false
+        })
+        .limit(1);
+
+    if (error) {
+        console.error(error);
+        return 1;
+    }
+
+    if (!data || data.length === 0) {
+        return 1;
+    }
+
+    return Number(data[0].position) + 1;
+}
 
 
-    const youtubeUrl =
-        $("youtubeUrl")
-            .value
-            .trim();
+// ==========================================
+// ADMIN — ADD LEVEL
+// ==========================================
 
+async function addLevel() {
+    if (!supabaseClient || !isAdmin()) return;
+
+    const levelName = $("adminLevelName").value.trim();
+    const levelId = $("adminLevelId").value.trim();
+    const creatorName = $("adminCreatorName").value.trim();
+    const difficulty = $("adminDifficulty").value.trim();
+    const youtubeUrl = $("adminYoutube").value.trim();
 
     if (
         !levelName ||
@@ -1479,565 +876,376 @@ async function saveLevel() {
         !creatorName ||
         !difficulty
     ) {
-
-        message(
-            "addLevelMessage",
-            "Fill in all required fields."
-        );
-
+        alert("Fill in all required fields.");
         return;
-
     }
 
+    const position = await getNextPosition();
 
-    // EDIT
+    const {
+        error
+    } = await supabaseClient
+        .from("levels")
+        .insert({
+            level_name: levelName,
+            level_id: levelId,
+            creator_name: creatorName,
+            difficulty: difficulty,
+            position: position,
+            youtube_url: youtubeUrl || null
+        });
 
-    if (editingLevelId !== null) {
-
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("levels")
-                .update({
-
-                    level_name:
-                        levelName,
-
-                    level_id:
-                        levelId,
-
-                    creator_name:
-                        creatorName,
-
-                    difficulty:
-                        difficulty,
-
-                    youtube_url:
-                        youtubeUrl ||
-                        null
-
-                })
-                .eq(
-                    "id",
-                    editingLevelId
-                );
-
-
-        if (error) {
-
-            console.error(error);
-
-            message(
-                "addLevelMessage",
-                "Could not update level."
-            );
-
-            return;
-
-        }
-
-
-        message(
-            "addLevelMessage",
-            "Level updated!",
-            true
-        );
-
-
-        cancelEdit(false);
-
+    if (error) {
+        console.error(error);
+        alert(error.message);
+        return;
     }
 
-    // ADD
-
-    else {
-
-        await normalizePositions();
-
-
-        const position =
-            await getNextPosition();
-
-
-        if (position === null) {
-
-            message(
-                "addLevelMessage",
-                "Could not calculate position."
-            );
-
-            return;
-
-        }
-
-
-        const {
-            error
-        } =
-            await supabaseClient
-                .from("levels")
-                .insert({
-
-                    level_name:
-                        levelName,
-
-                    level_id:
-                        levelId,
-
-                    creator_name:
-                        creatorName,
-
-                    difficulty:
-                        difficulty,
-
-                    position:
-                        position,
-
-                    youtube_url:
-                        youtubeUrl ||
-                        null
-
-                });
-
-
-        if (error) {
-
-            console.error(error);
-
-            message(
-                "addLevelMessage",
-                "Could not add level: " +
-                error.message
-            );
-
-            return;
-
-        }
-
-
-        message(
-            "addLevelMessage",
-            `Level added as #${position}!`,
-            true
-        );
-
-
-        clearLevelForm();
-
-    }
-
-
-    await normalizePositions();
-
-    await loadLevels();
+    $("adminLevelName").value = "";
+    $("adminLevelId").value = "";
+    $("adminCreatorName").value = "";
+    $("adminDifficulty").value = "";
+    $("adminYoutube").value = "";
 
     await loadAdminLevels();
+    await loadLevels();
 
+    alert("Level added!");
 }
 
 
-// ======================================================
-// EDIT LEVEL
-// ======================================================
+// ==========================================
+// ADMIN — LOAD LEVELS
+// ==========================================
 
-async function startEditLevel(id) {
+async function loadAdminLevels() {
+    const container = $("admin-levels-container");
 
-    if (!(await isAdmin())) return;
+    if (!container || !supabaseClient || !isAdmin()) {
+        return;
+    }
 
+    container.innerHTML = "Loading...";
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("levels")
-            .select("*")
-            .eq("id", id)
-            .single();
+    } = await supabaseClient
+        .from("levels")
+        .select("*")
+        .order("position", {
+            ascending: true
+        });
 
-
-    if (error || !data) {
-
+    if (error) {
         console.error(error);
-
+        container.innerHTML = error.message;
         return;
-
     }
 
+    if (!data || data.length === 0) {
+        container.innerHTML =
+            "<p>No levels.</p>";
+        return;
+    }
 
-    editingLevelId =
-        id;
+    container.innerHTML = data.map((level) => {
+        return `
+            <div class="admin-level">
 
+                <strong>
+                    #${level.position}
+                    ${escapeHTML(level.level_name)}
+                </strong>
 
-    $("levelName").value =
-        data.level_name || "";
+                <p>
+                    ID: ${escapeHTML(level.level_id)}
+                </p>
 
+                <p>
+                    Creator:
+                    ${escapeHTML(level.creator_name)}
+                </p>
 
-    $("levelId").value =
-        data.level_id || "";
+                <p>
+                    Difficulty:
+                    ${escapeHTML(level.difficulty)}
+                </p>
 
+                <button
+                    onclick="startEditLevel(${level.id})"
+                >
+                    Edit
+                </button>
 
-    $("creatorName").value =
-        data.creator_name || "";
+                <button
+                    onclick="deleteLevel(${level.id})"
+                >
+                    Delete
+                </button>
 
-
-    $("difficulty").value =
-        data.difficulty || "";
-
-
-    $("youtubeUrl").value =
-        data.youtube_url || "";
-
-
-    $("formTitle").textContent =
-        `Edit Level #${data.position}`;
-
-
-    $("saveLevelButton").textContent =
-        "Save Changes";
-
-
-    $("cancelEditButton")
-        .classList
-        .remove("hidden");
-
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-
+            </div>
+        `;
+    }).join("");
 }
 
 
-// ======================================================
-// CANCEL EDIT
-// ======================================================
+// ==========================================
+// ADMIN — START EDIT
+// ==========================================
 
-function cancelEdit(clearMessage = true) {
+async function startEditLevel(id) {
+    if (!supabaseClient || !isAdmin()) return;
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("levels")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    editingLevelId = id;
+
+    $("adminLevelName").value =
+        data.level_name || "";
+
+    $("adminLevelId").value =
+        data.level_id || "";
+
+    $("adminCreatorName").value =
+        data.creator_name || "";
+
+    $("adminDifficulty").value =
+        data.difficulty || "";
+
+    $("adminYoutube").value =
+        data.youtube_url || "";
+
+    const button = $("adminAddButton");
+
+    if (button) {
+        button.textContent = "Save Changes";
+        button.onclick = saveEditedLevel;
+    }
+}
+
+
+// ==========================================
+// ADMIN — SAVE EDIT
+// ==========================================
+
+async function saveEditedLevel() {
+    if (
+        !supabaseClient ||
+        !isAdmin() ||
+        !editingLevelId
+    ) {
+        return;
+    }
+
+    const levelName = $("adminLevelName").value.trim();
+    const levelId = $("adminLevelId").value.trim();
+    const creatorName = $("adminCreatorName").value.trim();
+    const difficulty = $("adminDifficulty").value.trim();
+    const youtubeUrl = $("adminYoutube").value.trim();
+
+    const {
+        error
+    } = await supabaseClient
+        .from("levels")
+        .update({
+            level_name: levelName,
+            level_id: levelId,
+            creator_name: creatorName,
+            difficulty: difficulty,
+            youtube_url: youtubeUrl || null
+        })
+        .eq("id", editingLevelId);
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
 
     editingLevelId = null;
 
+    $("adminLevelName").value = "";
+    $("adminLevelId").value = "";
+    $("adminCreatorName").value = "";
+    $("adminDifficulty").value = "";
+    $("adminYoutube").value = "";
 
-    clearLevelForm();
+    const button = $("adminAddButton");
 
-
-    $("formTitle").textContent =
-        "Add Level";
-
-
-    $("saveLevelButton").textContent =
-        "Add Level";
-
-
-    $("cancelEditButton")
-        .classList
-        .add("hidden");
-
-
-    if (clearMessage) {
-
-        $("addLevelMessage")
-            .textContent = "";
-
+    if (button) {
+        button.textContent = "Add Level";
+        button.onclick = addLevel;
     }
 
+    await loadAdminLevels();
+    await loadLevels();
+
+    alert("Level updated!");
 }
 
 
-// ======================================================
-// CLEAR FORM
-// ======================================================
+// ==========================================
+// ADMIN — DELETE LEVEL
+// ==========================================
 
-function clearLevelForm() {
+async function deleteLevel(id) {
+    if (!supabaseClient || !isAdmin()) return;
 
-    $("levelName").value = "";
+    const confirmed =
+        confirm("Delete this level?");
 
-    $("levelId").value = "";
-
-    $("creatorName").value = "";
-
-    $("difficulty").value = "";
-
-    $("youtubeUrl").value = "";
-
-}
-
-
-// ======================================================
-// DELETE LEVEL
-// ======================================================
-
-async function deleteLevel(id, levelName) {
-
-    if (!(await isAdmin())) {
-
-        alert(
-            "You do not have administrator access."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        !confirm(
-            `Delete "${levelName}"?`
-        )
-    ) {
-
-        return;
-
-    }
-
+    if (!confirmed) return;
 
     const {
         error
-    } =
-        await supabaseClient
-            .from("levels")
-            .delete()
-            .eq("id", id);
-
+    } = await supabaseClient
+        .from("levels")
+        .delete()
+        .eq("id", id);
 
     if (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not delete level."
-        );
-
+        alert(error.message);
         return;
-
     }
 
-
     await normalizePositions();
-
-    await loadLevels();
-
     await loadAdminLevels();
-
+    await loadLevels();
 }
 
 
-// ======================================================
-// ADMIN LEVELS
-// ======================================================
+// ==========================================
+// NORMALIZE POSITIONS
+// ==========================================
 
-async function loadAdminLevels() {
-
-    const container =
-        $("admin-levels-container");
-
-
-    if (!container) return;
-
-
+async function normalizePositions() {
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("levels")
-            .select("*")
-            .order(
-                "position",
-                {
-                    ascending: true
-                }
-            );
-
+    } = await supabaseClient
+        .from("levels")
+        .select("id")
+        .order("position", {
+            ascending: true
+        });
 
     if (error) {
-
         console.error(error);
-
-        container.innerHTML =
-            "<p>Could not load levels.</p>";
-
         return;
-
     }
 
-
-    if (!data.length) {
-
-        container.innerHTML =
-            "<p>No levels yet.</p>";
-
-        return;
-
+    for (let i = 0; i < data.length; i++) {
+        await supabaseClient
+            .from("levels")
+            .update({
+                position: i + 1
+            })
+            .eq("id", data[i].id);
     }
-
-
-    container.innerHTML =
-        data.map(level => {
-
-            return `
-
-                <div class="admin-level">
-
-                    <h3>
-                        #${escapeHTML(
-                            level.position
-                        )}
-                        —
-                        ${escapeHTML(
-                            level.level_name
-                        )}
-                    </h3>
-
-                    <p>
-                        ID:
-                        ${escapeHTML(
-                            level.level_id
-                        )}
-                    </p>
-
-                    <p>
-                        Creator:
-                        ${escapeHTML(
-                            level.creator_name
-                        )}
-                    </p>
-
-                    <p>
-                        Difficulty:
-                        ${escapeHTML(
-                            level.difficulty
-                        )}
-                    </p>
-
-                    <button
-                        onclick="startEditLevel(
-                            ${Number(level.id)}
-                        )"
-                    >
-                        Edit
-                    </button>
-
-                    <button
-                        onclick="deleteLevel(
-                            ${Number(level.id)},
-                            ${JSON.stringify(
-                                level.level_name
-                            )}
-                        )"
-                    >
-                        Delete
-                    </button>
-
-                </div>
-
-            `;
-
-        }).join("");
-
 }
 
 
-// ======================================================
-// ADMIN SUBMISSIONS
-// ======================================================
+// ==========================================
+// ADMIN — SUBMISSIONS
+// ==========================================
 
 async function loadAdminSubmissions() {
-
     const container =
         $("admin-submissions-container");
 
+    if (
+        !container ||
+        !supabaseClient ||
+        !isAdmin()
+    ) {
+        return;
+    }
 
-    if (!container) return;
-
+    container.innerHTML = "Loading submissions...";
 
     const {
         data,
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .select("*")
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
+    } = await supabaseClient
+        .from("submissions")
+        .select("*")
+        .order("created_at", {
+            ascending: false
+        });
 
     if (error) {
-
         console.error(error);
 
         container.innerHTML =
-            "<p>Could not load submissions.</p>";
+            error.message;
 
         return;
-
     }
 
-
-    if (!data.length) {
-
+    if (!data || data.length === 0) {
         container.innerHTML =
             "<p>No submissions.</p>";
 
         return;
-
     }
 
+    container.innerHTML = data.map((submission) => {
+        return `
+            <div class="admin-submission">
 
-    container.innerHTML =
-        data.map(submission => {
+                <h3>
+                    ${escapeHTML(submission.level_name)}
+                </h3>
 
-            return `
+                <p>
+                    ID:
+                    ${escapeHTML(submission.level_id)}
+                </p>
 
-                <div class="admin-submission">
+                <p>
+                    Creator:
+                    ${escapeHTML(submission.creator_name)}
+                </p>
 
-                    <h3>
+                <p>
+                    Difficulty:
+                    ${escapeHTML(
+                        submission.difficulty || "—"
+                    )}
+                </p>
+
+                <p>
+                    Status:
+                    <strong>
+                        ${escapeHTML(submission.status)}
+                    </strong>
+                </p>
+
+                <p>
+                    Video:
+                    <strong>
                         ${escapeHTML(
-                            submission.level_name
+                            submission.video_status || "pending"
                         )}
-                    </h3>
+                    </strong>
+                </p>
 
-                    <p>
-                        ID:
-                        ${escapeHTML(
-                            submission.level_id
-                        )}
-                    </p>
-
-                    <p>
-                        Creator:
-                        ${escapeHTML(
-                            submission.creator_name
-                        )}
-                    </p>
-
-                    <p>
-                        Difficulty:
-                        ${escapeHTML(
-                            submission.difficulty ||
-                            "Unknown"
-                        )}
-                    </p>
-
-                    <p>
-                        Status:
-                        <strong>
-                            ${escapeHTML(
-                                submission.status
-                            )}
-                        </strong>
-                    </p>
-
-                    ${
-                        submission.youtube_url
-                        ?
-                        `<p>
+                ${
+                    submission.youtube_url
+                    ? `
+                        <p>
                             <a
                                 href="${escapeHTML(
                                     submission.youtube_url
@@ -2045,599 +1253,335 @@ async function loadAdminSubmissions() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                Open YouTube Video
+                                Open YouTube video
                             </a>
-                        </p>`
-                        :
-                        ""
-                    }
+                        </p>
+                    `
+                    : ""
+                }
 
-
-                    <button
-                        onclick="approveSubmission(
-                            ${Number(submission.id)}
-                        )"
-                    >
-                        Approve
-                    </button>
-
+                <div class="admin-actions">
 
                     <button
-                        onclick="rejectSubmission(
-                            ${Number(submission.id)}
-                        )"
+                        onclick="approveSubmission(${submission.id})"
                     >
-                        Reject
+                        Approve Level
                     </button>
 
+                    <button
+                        onclick="rejectSubmission(${submission.id})"
+                    >
+                        Reject Level
+                    </button>
 
                     ${
                         submission.youtube_url
-                        ?
+                        ? `
+                            <button
+                                onclick="approveVideo(${submission.id})"
+                            >
+                                Approve Video
+                            </button>
+
+                            <button
+                                onclick="rejectVideo(${submission.id})"
+                            >
+                                Reject Video
+                            </button>
                         `
-
-                        <button
-                            onclick="approveVideo(
-                                ${Number(submission.id)}
-                            )"
-                        >
-                            Approve Video
-                        </button>
-
-                        <button
-                            onclick="rejectVideo(
-                                ${Number(submission.id)}
-                            )"
-                        >
-                            Reject Video
-                        </button>
-
-                        `
-                        :
-                        ""
+                        : ""
                     }
 
-
                     <button
-                        onclick="deleteSubmission(
-                            ${Number(submission.id)}
-                        )"
+                        onclick="deleteSubmission(${submission.id})"
                     >
                         Delete
                     </button>
 
                 </div>
 
-            `;
-
-        }).join("");
-
+            </div>
+        `;
+    }).join("");
 }
 
 
-// ======================================================
-// APPROVE SUBMISSION
-// ======================================================
+// ==========================================
+// ADMIN — APPROVE SUBMISSION
+// ==========================================
 
 async function approveSubmission(id) {
-
-    if (!(await isAdmin())) return;
-
+    if (!supabaseClient || !isAdmin()) return;
 
     const {
         data: submission,
-        error: getError
-    } =
-        await supabaseClient
-            .from("submissions")
-            .select("*")
-            .eq("id", id)
-            .single();
+        error: fetchError
+    } = await supabaseClient
+        .from("submissions")
+        .select("*")
+        .eq("id", id)
+        .single();
 
-
-    if (getError || !submission) {
-
-        alert(
-            "Submission not found."
-        );
-
+    if (fetchError) {
+        alert(fetchError.message);
         return;
-
     }
 
+    const position = await getNextPosition();
 
     const {
-        error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .update({
+        error: insertError
+    } = await supabaseClient
+        .from("levels")
+        .insert({
+            level_name: submission.level_name,
+            level_id: submission.level_id,
+            creator_name: submission.creator_name,
+            difficulty: submission.difficulty || "Unknown",
+            position: position,
+            youtube_url: submission.youtube_url || null
+        });
 
-                status:
-                    "approved"
-
-            })
-            .eq(
-                "id",
-                id
-            );
-
-
-    if (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not approve submission."
-        );
-
+    if (insertError) {
+        alert(insertError.message);
         return;
-
     }
-
-
-    // Check whether level already exists
 
     const {
-        data: existing
-    } =
-        await supabaseClient
-            .from("levels")
-            .select("id")
-            .eq(
-                "level_id",
-                submission.level_id
-            )
-            .maybeSingle();
+        error: updateError
+    } = await supabaseClient
+        .from("submissions")
+        .update({
+            status: "approved"
+        })
+        .eq("id", id);
 
-
-    if (!existing) {
-
-        const position =
-            await getNextPosition();
-
-
-        const {
-            error: levelError
-        } =
-            await supabaseClient
-                .from("levels")
-                .insert({
-
-                    level_name:
-                        submission.level_name,
-
-                    level_id:
-                        submission.level_id,
-
-                    creator_name:
-                        submission.creator_name,
-
-                    difficulty:
-                        submission.difficulty ||
-                        "Unknown",
-
-                    position:
-                        position,
-
-                    youtube_url:
-                        submission.youtube_url ||
-                        null
-
-                });
-
-
-        if (levelError) {
-
-            console.error(
-                levelError
-            );
-
-            alert(
-                "Submission approved, but level could not be added."
-            );
-
-            return;
-
-        }
-
+    if (updateError) {
+        alert(updateError.message);
+        return;
     }
-
-
-    await normalizePositions();
 
     await loadAdminSubmissions();
-
     await loadAdminLevels();
-
     await loadLevels();
 
+    alert("Submission approved!");
 }
 
 
-// ======================================================
-// REJECT SUBMISSION
-// ======================================================
+// ==========================================
+// ADMIN — REJECT SUBMISSION
+// ==========================================
 
 async function rejectSubmission(id) {
+    if (!supabaseClient || !isAdmin()) return;
 
-    if (!(await isAdmin())) return;
-
-
-    const reason =
-        prompt(
-            "Reason for rejection (optional):"
-        );
-
+    const message =
+        prompt("Reason for rejection:");
 
     const {
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .update({
-
-                status:
-                    "rejected",
-
-                admin_message:
-                    reason ||
-                    null
-
-            })
-            .eq(
-                "id",
-                id
-            );
-
+    } = await supabaseClient
+        .from("submissions")
+        .update({
+            status: "rejected",
+            admin_message: message || null
+        })
+        .eq("id", id);
 
     if (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not reject submission."
-        );
-
+        alert(error.message);
         return;
-
     }
-
 
     await loadAdminSubmissions();
 
+    alert("Submission rejected.");
 }
 
 
-// ======================================================
-// APPROVE VIDEO
-// ======================================================
+// ==========================================
+// ADMIN — APPROVE VIDEO
+// ==========================================
 
 async function approveVideo(id) {
-
-    if (!(await isAdmin())) return;
-
+    if (!supabaseClient || !isAdmin()) return;
 
     const {
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .update({
-
-                video_status:
-                    "approved",
-
-                video_rejection_reason:
-                    null
-
-            })
-            .eq(
-                "id",
-                id
-            );
-
+    } = await supabaseClient
+        .from("submissions")
+        .update({
+            video_status: "approved",
+            video_rejection_reason: null
+        })
+        .eq("id", id);
 
     if (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not approve video."
-        );
-
+        alert(error.message);
         return;
-
     }
-
 
     await loadAdminSubmissions();
 
+    alert("Video approved!");
 }
 
 
-// ======================================================
-// REJECT VIDEO
-// ======================================================
+// ==========================================
+// ADMIN — REJECT VIDEO
+// ==========================================
 
 async function rejectVideo(id) {
-
-    if (!(await isAdmin())) return;
-
+    if (!supabaseClient || !isAdmin()) return;
 
     const reason =
-        prompt(
-            "Reason for video rejection:"
-        );
-
+        prompt("Reason for video rejection:");
 
     const {
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .update({
-
-                video_status:
-                    "rejected",
-
-                video_rejection_reason:
-                    reason ||
-                    "Video did not pass review."
-
-            })
-            .eq(
-                "id",
-                id
-            );
-
+    } = await supabaseClient
+        .from("submissions")
+        .update({
+            video_status: "rejected",
+            video_rejection_reason:
+                reason || null
+        })
+        .eq("id", id);
 
     if (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not reject video."
-        );
-
+        alert(error.message);
         return;
-
     }
-
 
     await loadAdminSubmissions();
 
+    alert("Video rejected.");
 }
 
 
-// ======================================================
-// DELETE SUBMISSION
-// ======================================================
+// ==========================================
+// ADMIN — DELETE SUBMISSION
+// ==========================================
 
 async function deleteSubmission(id) {
+    if (!supabaseClient || !isAdmin()) return;
 
-    if (!(await isAdmin())) return;
+    const confirmed =
+        confirm("Delete this submission?");
 
-
-    if (
-        !confirm(
-            "Delete this submission?"
-        )
-    ) {
-
-        return;
-
-    }
-
+    if (!confirmed) return;
 
     const {
         error
-    } =
-        await supabaseClient
-            .from("submissions")
-            .delete()
-            .eq(
-                "id",
-                id
-            );
-
+    } = await supabaseClient
+        .from("submissions")
+        .delete()
+        .eq("id", id);
 
     if (error) {
-
-        console.error(error);
-
-        alert(
-            "Could not delete submission."
-        );
-
+        alert(error.message);
         return;
-
     }
-
 
     await loadAdminSubmissions();
 
+    alert("Submission deleted.");
 }
 
 
-// ======================================================
-// SEARCH
-// ======================================================
+// ==========================================
+// INITIALIZATION
+// ==========================================
 
-function setupSearch() {
+async function initializeApp() {
+    if (!supabaseClient) {
+        console.warn(
+            "Supabase is not configured."
+        );
 
-    const input =
-        $("searchInput");
+        return;
+    }
 
+    await loadCurrentUser();
 
-    if (!input) return;
+    updateAuthUI();
 
-
-    input.addEventListener(
-        "input",
-        async function () {
-
-            const query =
-                input.value
-                    .trim()
-                    .toLowerCase();
+    showPage("list");
+}
 
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("levels")
-                    .select("*")
-                    .order(
-                        "position",
-                        {
-                            ascending: true
-                        }
-                    );
+// ==========================================
+// SUPABASE AUTH LISTENER
+// ==========================================
 
+if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange(
+        async (event, session) => {
 
-            if (error) {
+            currentUser =
+                session?.user || null;
 
-                console.error(error);
-
-                return;
-
+            if (currentUser) {
+                await loadCurrentProfile();
+            } else {
+                currentProfile = null;
             }
 
-
-            const filtered =
-                data.filter(level => {
-
-                    return (
-
-                        String(
-                            level.level_name ||
-                            ""
-                        )
-                        .toLowerCase()
-                        .includes(query)
-
-                        ||
-
-                        String(
-                            level.level_id ||
-                            ""
-                        )
-                        .toLowerCase()
-                        .includes(query)
-
-                        ||
-
-                        String(
-                            level.creator_name ||
-                            ""
-                        )
-                        .toLowerCase()
-                        .includes(query)
-
-                        ||
-
-                        String(
-                            level.difficulty ||
-                            ""
-                        )
-                        .toLowerCase()
-                        .includes(query)
-
-                    );
-
-                });
-
-
-            renderLevels(filtered);
-
+            updateAuthUI();
         }
     );
-
 }
 
 
-// ======================================================
-// START
-// ======================================================
+// ==========================================
+// SEARCH LISTENER
+// ==========================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    async function () {
+    () => {
 
-        setupSearch();
+        const searchInput =
+            $("searchInput");
 
-
-        if (supabaseClient) {
-
-            supabaseClient
-                .auth
-                .onAuthStateChange(
-                    function (
-                        event,
-                        session
-                    ) {
-
-                        currentUser =
-                            session?.user ||
-                            null;
-
-                        updateAuthUI();
-
-                    }
-                );
-
-
-            await loadCurrentUser();
-
+        if (searchInput) {
+            searchInput.addEventListener(
+                "input",
+                searchLevels
+            );
         }
 
-
-        updateAuthUI();
-
-
-        await showPage("list");
-
+        initializeApp();
     }
 );
 
 
-// ======================================================
+// ==========================================
 // MAKE FUNCTIONS AVAILABLE TO HTML
-// ======================================================
+// ==========================================
 
 window.showPage = showPage;
 
 window.playerLogin = playerLogin;
-
 window.registerPlayer = registerPlayer;
-
 window.playerLogout = playerLogout;
 
 window.submitLevel = submitLevel;
 
-window.openAdminLogin = openAdminLogin;
-
 window.adminLogin = adminLogin;
 
-window.adminLogout = adminLogout;
-
-window.saveLevel = saveLevel;
-
+window.addLevel = addLevel;
 window.startEditLevel = startEditLevel;
-
-window.cancelEdit = cancelEdit;
-
+window.saveEditedLevel = saveEditedLevel;
 window.deleteLevel = deleteLevel;
 
 window.approveSubmission = approveSubmission;
-
 window.rejectSubmission = rejectSubmission;
 
 window.approveVideo = approveVideo;
-
 window.rejectVideo = rejectVideo;
 
 window.deleteSubmission = deleteSubmission;
+
+window.searchLevels = searchLevels;
